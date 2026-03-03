@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vibe -d vibe_party"]
       interval: 5s
@@ -32,8 +33,14 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      KC_DB: dev-mem
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: vibe
+      KC_DB_PASSWORD: vibe_secret
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HTTP_PORT: 8180
