@@ -1,0 +1,42 @@
+# =============================================================================
+# Vibe-Party — .gitignore
+# =============================================================================
+
+# --- Environment & secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Go ---
+backend/vendor/
+backend/*.exe
+backend/*.test
+backend/server
+backend/bin/
+backend/tmp/
+
+# --- Frontend ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# --- Lato font binaries (must be downloaded manually) ---
+frontend/public/fonts/lato/*.woff
+frontend/public/fonts/lato/*.woff2
+frontend/public/fonts/lato/*.ttf
+frontend/public/fonts/lato/*.eot
+!frontend/public/fonts/lato/.gitkeep
+
+# --- Docker ---
+postgres_data/
+redis_data/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo

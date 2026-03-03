@@ -1,0 +1,15 @@
+.page {
+  max-width: 680px;
+}
+
+.card {
+  background-color: #fff;
+}
+
+.card :global(.p-card-body) {
+  padding: 2rem;
+}
+
+.card :global(.p-card-content) {
+  padding: 0;
+}

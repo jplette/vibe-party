@@ -1,0 +1,117 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vibe
+      POSTGRES_PASSWORD: vibe_secret
+      POSTGRES_DB: vibe_party
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vibe -d vibe_party"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    restart: unless-stopped
+    environment:
+      KC_DB: dev-mem
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8180
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    command: ["start-dev", "--http-port=8180", "--import-realm"]
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8180/health/ready || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1025"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://vibe:vibe_secret@postgres:5432/vibe_party?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      KEYCLOAK_ISSUER: http://localhost:8180/realms/vibe-party
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8180/realms/vibe-party
+      KEYCLOAK_CLIENT_ID: vibe-party-frontend
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      APP_PORT: 8080
+      APP_ENV: development
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080/api/v1
+        VITE_OIDC_AUTHORITY: http://localhost:8180/realms/vibe-party
+        VITE_OIDC_CLIENT_ID: vibe-party-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
+
+volumes:
+  postgres_data:
+  redis_data:

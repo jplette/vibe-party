@@ -1,0 +1,57 @@
+/* Brand color tokens for vibe-party */
+:root {
+  /* Primary palette */
+  --color-primary: #ff6b35;
+  --color-primary-light: #f7c59f;
+  --color-primary-dark: #e55a24;
+
+  /* Surface / background */
+  --color-surface: #efefd0;
+  --color-surface-card: #f7f7e8;
+
+  /* Navigation / accent */
+  --color-nav: #004e89;
+  --color-nav-hover: #003d6b;
+  --color-accent: #1a659e;
+
+  /* Text */
+  --color-text: #212529;
+  --color-text-muted: #6c757d;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-nav: #ffffff;
+
+  /* Grey scale */
+  --color-bg: #f8f9fa;
+  --color-platinum: #e9ecef;
+  --color-border: #dee2e6;
+  --color-pale-slate: #ced4da;
+  --color-slate-grey: #6c757d;
+  --color-iron-grey: #495057;
+  --color-gunmetal: #343a40;
+  --color-carbon-black: #212529;
+
+  /* Semantic */
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+  --color-info: #17a2b8;
+
+  /* Spacing */
+  --sidebar-width: 260px;
+  --header-height: 64px;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}
