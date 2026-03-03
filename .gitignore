@@ -20,13 +20,6 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
-# --- Lato font binaries (must be downloaded manually) ---
-frontend/public/fonts/lato/*.woff
-frontend/public/fonts/lato/*.woff2
-frontend/public/fonts/lato/*.ttf
-frontend/public/fonts/lato/*.eot
-!frontend/public/fonts/lato/.gitkeep
-
 # --- Docker ---
 postgres_data/
 redis_data/
