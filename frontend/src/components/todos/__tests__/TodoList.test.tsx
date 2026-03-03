@@ -31,25 +31,25 @@ function setupHooks({
     data: todos,
     isLoading,
     isError,
-  } as ReturnType<typeof useTodos>);
+  } as unknown as ReturnType<typeof useTodos>);
 
   vi.mocked(useEventMembers).mockReturnValue({
     data: members,
-  } as ReturnType<typeof useEventMembers>);
+  } as unknown as ReturnType<typeof useEventMembers>);
 
   vi.mocked(useCreateTodo).mockReturnValue({
     mutateAsync: mockMutateAsync,
     isPending: false,
-  } as ReturnType<typeof useCreateTodo>);
+  } as unknown as ReturnType<typeof useCreateTodo>);
 
   vi.mocked(useToggleTodo).mockReturnValue({
     mutate: mockMutate,
     isPending: false,
-  } as ReturnType<typeof useToggleTodo>);
+  } as unknown as ReturnType<typeof useToggleTodo>);
 
   vi.mocked(useDeleteTodo).mockReturnValue({
     mutate: mockMutate,
-  } as ReturnType<typeof useDeleteTodo>);
+  } as unknown as ReturnType<typeof useDeleteTodo>);
 }
 
 describe('TodoList', () => {

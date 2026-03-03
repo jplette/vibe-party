@@ -32,25 +32,25 @@ function setupHooks({
     data: items,
     isLoading,
     isError,
-  } as ReturnType<typeof useItems>);
+  } as unknown as ReturnType<typeof useItems>);
 
   vi.mocked(useEventMembers).mockReturnValue({
     data: members,
-  } as ReturnType<typeof useEventMembers>);
+  } as unknown as ReturnType<typeof useEventMembers>);
 
   vi.mocked(useCreateItem).mockReturnValue({
     mutateAsync: mockMutateAsync,
     isPending: false,
-  } as ReturnType<typeof useCreateItem>);
+  } as unknown as ReturnType<typeof useCreateItem>);
 
   vi.mocked(useToggleItem).mockReturnValue({
     mutate: mockMutate,
     isPending: false,
-  } as ReturnType<typeof useToggleItem>);
+  } as unknown as ReturnType<typeof useToggleItem>);
 
   vi.mocked(useDeleteItem).mockReturnValue({
     mutate: mockMutate,
-  } as ReturnType<typeof useDeleteItem>);
+  } as unknown as ReturnType<typeof useDeleteItem>);
 }
 
 describe('BringItemList', () => {
@@ -126,7 +126,7 @@ describe('BringItemList', () => {
     const deleteMutate = vi.fn();
     const item = makeBringItem({ id: 'item-99', name: 'Ice' });
     setupHooks({ items: [item] });
-    vi.mocked(useDeleteItem).mockReturnValue({ mutate: deleteMutate } as ReturnType<typeof useDeleteItem>);
+    vi.mocked(useDeleteItem).mockReturnValue({ mutate: deleteMutate } as unknown as ReturnType<typeof useDeleteItem>);
 
     renderWithProviders(<BringItemList eventId="evt-1" />);
     await user.click(screen.getByRole('button', { name: /delete item: ice/i }));

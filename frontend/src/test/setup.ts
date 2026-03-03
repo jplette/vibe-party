@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach, afterAll, beforeAll, vi } from 'vitest';
 
 // Clean up after each test to avoid memory leaks and stale DOM state
 afterEach(() => {

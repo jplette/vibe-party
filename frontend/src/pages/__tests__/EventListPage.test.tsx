@@ -16,26 +16,26 @@ import { useEvents } from '../../hooks/useEvents';
 
 describe('EventListPage', () => {
   it('renders the page heading', () => {
-    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.getByText('My Events')).toBeInTheDocument();
   });
 
   it('renders the page subtitle', () => {
-    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.getByText(/all events you're part of/i)).toBeInTheDocument();
   });
 
   it('shows loading spinner when events are loading', () => {
-    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     const spinner = document.querySelector('.p-progress-spinner');
     expect(spinner).toBeTruthy();
   });
 
   it('shows error message and Retry button on error', () => {
-    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.getByText(/couldn't load your events/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
@@ -44,14 +44,14 @@ describe('EventListPage', () => {
   it('calls refetch when Retry button is clicked', async () => {
     const user = userEvent.setup();
     const refetch = vi.fn();
-    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     await user.click(screen.getByRole('button', { name: /retry/i }));
     expect(refetch).toHaveBeenCalledOnce();
   });
 
   it('shows empty state when no events exist', () => {
-    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.getByText(/no events yet/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create your first event/i })).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('EventListPage', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useEvents>);
+    } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.getByText('Rooftop Party')).toBeInTheDocument();
   });
@@ -78,7 +78,7 @@ describe('EventListPage', () => {
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
-    } as ReturnType<typeof useEvents>);
+    } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.getByText('Birthday Bash')).toBeInTheDocument();
     expect(screen.getByText('Game Night')).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('EventListPage', () => {
 
   it('navigates to /events/new from the header Create Event button', async () => {
     const user = userEvent.setup();
-    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     // Header action button
     await user.click(screen.getAllByRole('button', { name: /create event/i })[0]);
@@ -95,7 +95,7 @@ describe('EventListPage', () => {
   });
 
   it('does not show error state when loading is in progress', () => {
-    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() } as ReturnType<typeof useEvents>);
+    vi.mocked(useEvents).mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() } as unknown as ReturnType<typeof useEvents>);
     renderWithProviders(<EventListPage />);
     expect(screen.queryByText(/couldn't load/i)).not.toBeInTheDocument();
   });
