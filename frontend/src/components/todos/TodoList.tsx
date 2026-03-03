@@ -144,7 +144,9 @@ export function TodoList({ eventId }: TodoListProps) {
       {/* Empty state */}
       {(todos ?? []).length === 0 && (
         <div className={styles.empty}>
-          <i className="pi pi-check-circle" aria-hidden="true" style={{ fontSize: '2.5rem', color: 'var(--color-primary-light)' }} />
+          <div className={styles.emptyIcon} aria-hidden="true">
+            <i className="pi pi-check-circle" />
+          </div>
           <p>No todos yet. Add one to get started!</p>
         </div>
       )}

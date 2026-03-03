@@ -35,8 +35,8 @@ export function InvitationDeclinePage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.logoRow}>
-          <i className="pi pi-star-fill" style={{ color: 'var(--color-primary)', fontSize: '1.5rem' }} />
-          <span className={styles.logoText}>Vibe Party</span>
+          <i className={`pi pi-star-fill ${styles.logoIcon}`} aria-hidden="true" />
+          <span className={styles.logoText}>Vibe<span className={styles.logoAccent}>Party</span></span>
         </div>
 
         {status === 'loading' && (
