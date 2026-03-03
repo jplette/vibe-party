@@ -1,0 +1,35 @@
+/*
+ * Lato font — local files.
+ * TODO: Download Lato font files from https://fonts.google.com/specimen/Lato
+ *       and place them in /public/fonts/lato/:
+ *         - Lato-Regular.woff2
+ *         - Lato-Bold.woff2
+ *         - Lato-Italic.woff2
+ *
+ * The @font-face rules below reference those local files.
+ * The system-ui fallback stack will be used until the files are present.
+ */
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

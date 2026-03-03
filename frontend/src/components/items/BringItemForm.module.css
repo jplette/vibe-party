@@ -1,0 +1,46 @@
+.form {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.fieldGroup {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fieldGroup :global(.p-inputtext) {
+  width: 100%;
+}
+
+.fieldError {
+  color: var(--color-danger);
+  font-size: 0.8125rem;
+}
+
+.qtyInput {
+  width: 150px !important;
+}
+
+.assignDropdown {
+  min-width: 160px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
