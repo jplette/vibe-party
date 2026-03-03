@@ -19,6 +19,8 @@ backend/tmp/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/coverage/
+frontend/e2e-report/
 
 # --- Docker ---
 postgres_data/
