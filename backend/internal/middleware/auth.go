@@ -44,6 +44,7 @@ func JWTAuth(
 	clientID string,
 	redisClient *redis.Client,
 	userSvc *service.UserService,
+	invSvc *service.InvitationService,
 	logger *slog.Logger,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -95,6 +96,11 @@ func JWTAuth(
 				logger.ErrorContext(r.Context(), "failed to sync user", slog.String("error", err.Error()))
 				respondAuthError(w, http.StatusInternalServerError, "user sync failed")
 				return
+			}
+
+			// Claim any event memberships from accepted invitations (best-effort).
+			if err := invSvc.ClaimForUser(r.Context(), user.ID, user.Email); err != nil {
+				logger.WarnContext(r.Context(), "failed to claim invitations for user", slog.String("error", err.Error()))
 			}
 
 			// Store user in context for downstream handlers.

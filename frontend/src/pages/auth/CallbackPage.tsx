@@ -26,7 +26,9 @@ export function CallbackPage() {
       .signinRedirectCallback()
       .then((user) => {
         setOidcUser(user);
-        navigate('/', { replace: true });
+        const redirect = sessionStorage.getItem('vibe_post_login_redirect') ?? '/';
+        sessionStorage.removeItem('vibe_post_login_redirect');
+        navigate(redirect, { replace: true });
       })
       .catch((err: unknown) => {
         console.error('OIDC callback error:', err);

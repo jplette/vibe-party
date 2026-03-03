@@ -1,4 +1,5 @@
 
+import { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { Button } from 'primereact/button';
@@ -6,25 +7,55 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { Tag } from 'primereact/tag';
 import { Avatar } from 'primereact/avatar';
+import { Dialog } from 'primereact/dialog';
+import { Toast } from 'primereact/toast';
 import { PageHeader } from '../components/layout/PageHeader';
 import { TodoList } from '../components/todos/TodoList';
 import { BringItemList } from '../components/items/BringItemList';
+import { InviteForm } from '../components/invitations/InviteForm';
 import { useEvent } from '../hooks/useEvents';
-import { useEventMembers } from '../hooks/useInvitations';
+import { useEventMembers, useSendInvitation } from '../hooks/useInvitations';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useAuth } from '../auth/useAuth';
 import { formatDateTime, formatDate } from '../utils/formatDate';
+import type { InvitationFormValues } from '../types';
 import styles from './EventDetailPage.module.css';
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { userId } = useAuth();
+  useAuth();
+  const { data: currentUser } = useCurrentUser();
+  const dbUserId = currentUser?.id ?? null;
+  const toast = useRef<Toast>(null);
+  const [inviteVisible, setInviteVisible] = useState(false);
+  const sendInvitation = useSendInvitation(id!);
 
   const { data: event, isLoading, isError } = useEvent(id!);
   const { data: members = [] } = useEventMembers(id!);
 
-  const currentMember = members.find((m) => m.userId === userId);
-  const isAdmin = currentMember?.role === 'admin' || event?.createdBy === userId;
+  const currentMember = members.find((m) => m.userId === dbUserId);
+  const isAdmin = currentMember?.role === 'admin' || event?.createdBy === dbUserId;
+
+  const handleSendInvite = async (data: InvitationFormValues) => {
+    try {
+      await sendInvitation.mutateAsync(data);
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Invited!',
+        detail: `Invitation sent to ${data.email}`,
+        life: 3000,
+      });
+      setInviteVisible(false);
+    } catch {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to send invitation. They may already be invited.',
+        life: 4000,
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -45,6 +76,21 @@ export function EventDetailPage() {
 
   return (
     <div className={styles.page}>
+      <Toast ref={toast} />
+      <Dialog
+        header="Invite Guest"
+        visible={inviteVisible}
+        onHide={() => setInviteVisible(false)}
+        style={{ width: '420px' }}
+        draggable={false}
+        resizable={false}
+      >
+        <p style={{ margin: '0 0 1rem', color: 'var(--color-text-muted)' }}>
+          They'll receive an email with an accept/decline link.
+        </p>
+        <InviteForm onSubmit={handleSendInvite} isLoading={sendInvitation.isPending} />
+      </Dialog>
+
       <PageHeader
         title={event.name}
         subtitle={event.date ? formatDateTime(event.date) : 'Date TBD'}
@@ -155,11 +201,10 @@ export function EventDetailPage() {
             {isAdmin && (
               <div className={styles.guestActions}>
                 <Button
-                  label="Invite People"
+                  label="Invite Guest"
                   icon="pi pi-user-plus"
-                  outlined
-                  onClick={() => navigate(`/events/${id}/settings`)}
-                  style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                  onClick={() => setInviteVisible(true)}
+                  style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
                 />
               </div>
             )}
@@ -186,7 +231,7 @@ export function EventDetailPage() {
                       <div className={styles.memberInfo}>
                         <span className={styles.memberName}>
                           {member.user?.name ?? member.user?.email ?? member.userId}
-                          {member.userId === userId && (
+                          {member.userId === dbUserId && (
                             <span className={styles.youBadge}> (you)</span>
                           )}
                         </span>

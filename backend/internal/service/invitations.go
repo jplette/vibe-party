@@ -125,31 +125,48 @@ func (s *InvitationService) CancelInvitation(ctx context.Context, eventID, invID
 }
 
 // AcceptInvitation processes a token-based acceptance.
-// If userID is provided, adds the user to the event as a member.
-func (s *InvitationService) AcceptInvitation(ctx context.Context, token string, userID *uuid.UUID) error {
+// Marks the invitation as accepted and adds the user to the event if they
+// already have an account (looked up by invitation email).
+// Returns the accepted invitation so callers can access the EventID for redirects.
+func (s *InvitationService) AcceptInvitation(ctx context.Context, token string) (*model.Invitation, error) {
 	inv, err := s.invRepo.GetByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return ErrNotFound
+			return nil, ErrNotFound
 		}
-		return fmt.Errorf("get invitation: %w", err)
+		return nil, fmt.Errorf("get invitation: %w", err)
 	}
 
 	if inv.Status != "pending" {
-		return fmt.Errorf("%w: invitation is already %s", ErrInvalidInput, inv.Status)
+		return nil, fmt.Errorf("%w: invitation is already %s", ErrInvalidInput, inv.Status)
 	}
 
 	if err := s.invRepo.UpdateStatus(ctx, inv.ID, "accepted"); err != nil {
-		return fmt.Errorf("update invitation status: %w", err)
+		return nil, fmt.Errorf("update invitation status: %w", err)
 	}
 
-	// If a user ID is given, add them to the event.
-	if userID != nil {
-		if err := s.eventRepo.AddMember(ctx, inv.EventID, *userID, "member"); err != nil {
-			return fmt.Errorf("add member: %w", err)
-		}
+	// Look up the user by invitation email and add them to the event immediately.
+	// If the user doesn't have an account yet, ClaimForUser will handle it at login.
+	user, err := s.userRepo.GetByEmail(ctx, inv.Email)
+	if err == nil {
+		// Ignore add-member error: ON CONFLICT DO NOTHING covers duplicates.
+		_ = s.eventRepo.AddMember(ctx, inv.EventID, user.ID, "member")
 	}
 
+	return inv, nil
+}
+
+// ClaimForUser adds the user to any events for which they have accepted invitations.
+// Called after user upsert on login to handle invitations accepted before account creation.
+func (s *InvitationService) ClaimForUser(ctx context.Context, userID uuid.UUID, email string) error {
+	invs, err := s.invRepo.ListAcceptedByEmail(ctx, email)
+	if err != nil {
+		return fmt.Errorf("list accepted invitations: %w", err)
+	}
+	for _, inv := range invs {
+		// ON CONFLICT DO NOTHING — safe to call even if already a member.
+		_ = s.eventRepo.AddMember(ctx, inv.EventID, userID, "member")
+	}
 	return nil
 }
 

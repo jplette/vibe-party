@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/vibe-party/backend/internal/service"
 )
 
@@ -96,7 +95,6 @@ func (h *InvitationHandler) CancelInvitation(w http.ResponseWriter, r *http.Requ
 }
 
 // AcceptInvitation handles POST /invitations/accept — no auth required.
-// If the caller is authenticated, the user is added to the event.
 func (h *InvitationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	var req acceptDeclineRequest
 	if !DecodeJSON(w, r, &req) {
@@ -107,17 +105,14 @@ func (h *InvitationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Optionally extract user if authenticated (may be nil for unauthenticated flow).
-	var userID *uuid.UUID
-	if user := UserFromContext(r); user != nil {
-		id := user.ID
-		userID = &id
-	}
-
-	if err := h.invSvc.AcceptInvitation(r.Context(), req.Token, userID); HandleServiceError(w, err) {
+	inv, err := h.invSvc.AcceptInvitation(r.Context(), req.Token)
+	if HandleServiceError(w, err) {
 		return
 	}
-	RespondJSON(w, http.StatusOK, map[string]string{"status": "accepted"})
+	RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"status":  "accepted",
+		"eventId": inv.EventID,
+	})
 }
 
 // DeclineInvitation handles POST /invitations/decline — no auth required.

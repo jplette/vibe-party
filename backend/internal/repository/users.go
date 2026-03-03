@@ -56,6 +56,24 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 	return u, nil
 }
 
+// GetByEmail fetches a user by their email address.
+func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	const q = `
+		SELECT id, keycloak_id, email, name, global_role, created_at, updated_at
+		FROM users
+		WHERE email = $1
+	`
+	row := r.db.QueryRow(ctx, q, email)
+	u, err := scanUser(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("get user by email: %w", err)
+	}
+	return u, nil
+}
+
 // GetByKeycloakID fetches a user by their Keycloak subject ID.
 func (r *UserRepository) GetByKeycloakID(ctx context.Context, keycloakID string) (*model.User, error) {
 	const q = `

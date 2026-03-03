@@ -97,6 +97,31 @@ func (r *InvitationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mode
 	return inv, nil
 }
 
+// ListAcceptedByEmail returns all accepted invitations for a given email address.
+// Used to claim memberships when a user logs in for the first time after accepting.
+func (r *InvitationRepository) ListAcceptedByEmail(ctx context.Context, email string) ([]model.Invitation, error) {
+	const q = `
+		SELECT id, event_id, email, token, status, invited_by, created_at, updated_at
+		FROM invitations
+		WHERE email = $1 AND status = 'accepted'
+	`
+	rows, err := r.db.Query(ctx, q, email)
+	if err != nil {
+		return nil, fmt.Errorf("list accepted invitations by email: %w", err)
+	}
+	defer rows.Close()
+
+	var invs []model.Invitation
+	for rows.Next() {
+		inv, err := scanInvitation(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan invitation: %w", err)
+		}
+		invs = append(invs, *inv)
+	}
+	return invs, rows.Err()
+}
+
 // UpdateStatus changes the status of an invitation.
 func (r *InvitationRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	const q = `

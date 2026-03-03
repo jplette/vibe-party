@@ -27,7 +27,7 @@ export function useEventMembers(eventId: string): UseQueryResult<EventMember[]> 
     queryKey: invitationKeys.members(eventId),
     queryFn: () => invitationsApi.listMembers(eventId),
     enabled: !!eventId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 }
 

@@ -100,6 +100,21 @@ func (s *EventService) DeleteEvent(ctx context.Context, eventID, userID uuid.UUI
 	return nil
 }
 
+// ListMembers returns all members of an event. The requesting user must be a member.
+func (s *EventService) ListMembers(ctx context.Context, eventID, userID uuid.UUID) ([]model.EventMemberWithUser, error) {
+	if _, err := s.RequireMember(ctx, eventID, userID); err != nil {
+		return nil, err
+	}
+	members, err := s.eventRepo.ListMembers(ctx, eventID)
+	if err != nil {
+		return nil, fmt.Errorf("list members: %w", err)
+	}
+	if members == nil {
+		members = []model.EventMemberWithUser{}
+	}
+	return members, nil
+}
+
 // RequireMember verifies the user is a member of the event. Returns the role.
 func (s *EventService) RequireMember(ctx context.Context, eventID, userID uuid.UUID) (string, error) {
 	role, err := s.eventRepo.GetMemberRole(ctx, eventID, userID)

@@ -13,6 +13,7 @@ export function InvitationAcceptPage() {
   const token = searchParams.get('token');
   const [status, setStatus] = useState<Status>(token ? 'loading' : 'missing-token');
   const [message, setMessage] = useState('');
+  const [eventId, setEventId] = useState<string | null>(null);
   const called = useRef(false);
 
   useEffect(() => {
@@ -22,7 +23,8 @@ export function InvitationAcceptPage() {
     invitationsApi
       .accept(token)
       .then((res) => {
-        setMessage(res.message ?? 'Invitation accepted! You can now view the event.');
+        setEventId(res.eventId ?? null);
+        setMessage('Invitation accepted! You can now view the event.');
         setStatus('success');
       })
       .catch(() => {
@@ -54,9 +56,13 @@ export function InvitationAcceptPage() {
             <h1 className={styles.heading}>You're in!</h1>
             <p className={styles.bodyText}>{message}</p>
             <Button
-              label="Sign in to view event"
-              icon="pi pi-sign-in"
-              onClick={() => navigate('/')}
+              label="View Event"
+              icon="pi pi-arrow-right"
+              onClick={() => {
+                const target = eventId ? `/events/${eventId}` : '/';
+                sessionStorage.setItem('vibe_post_login_redirect', target);
+                navigate(target);
+              }}
               style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
             />
           </>

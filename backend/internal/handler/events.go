@@ -146,6 +146,27 @@ func (h *EventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ListMembers handles GET /events/:id/members.
+func (h *EventHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
+	user, ok := RequireUser(w, r)
+	if !ok {
+		return
+	}
+
+	eventID, err := parseUUIDParam(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	members, err := h.eventSvc.ListMembers(r.Context(), eventID, user.ID)
+	if HandleServiceError(w, err) {
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, members)
+}
+
 // parseUUIDParam extracts and parses a UUID from a Chi URL parameter.
 func parseUUIDParam(r *http.Request, param string) (uuid.UUID, error) {
 	return uuid.Parse(chi.URLParam(r, param))

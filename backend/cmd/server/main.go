@@ -96,7 +96,7 @@ func main() {
 	invHandler := handler.NewInvitationHandler(invSvc)
 
 	// Build middleware.
-	jwtAuth := middleware.JWTAuth(cfg.KeycloakIssuer, cfg.KeycloakInternalURL, cfg.KeycloakClientID, redisClient, userSvc, logger)
+	jwtAuth := middleware.JWTAuth(cfg.KeycloakIssuer, cfg.KeycloakInternalURL, cfg.KeycloakClientID, redisClient, userSvc, invSvc, logger)
 	corsMiddleware := middleware.CORS(cfg.CORSAllowedOrigins)
 	rateLimiter := middleware.RateLimiter(100)
 	// Stricter rate limiter for invitation endpoint (20 req/min).
@@ -136,6 +136,9 @@ func main() {
 			r.Get("/events/{id}", eventHandler.GetEvent)
 			r.Put("/events/{id}", eventHandler.UpdateEvent)
 			r.Delete("/events/{id}", eventHandler.DeleteEvent)
+
+			// Members (nested under events).
+			r.Get("/events/{id}/members", eventHandler.ListMembers)
 
 			// Todos (nested under events).
 			r.Get("/events/{id}/todos", todoHandler.ListTodos)

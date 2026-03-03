@@ -12,8 +12,8 @@ export const invitationsApi = {
     apiClient.delete(`events/${eventId}/invitations/${invitationId}`).json<void>(),
 
   // Public endpoints — no auth required
-  accept: (token: string): Promise<{ message: string }> =>
-    apiClient.post('invitations/accept', { json: { token } }).json<{ message: string }>(),
+  accept: (token: string): Promise<{ status: string; eventId: string }> =>
+    apiClient.post('invitations/accept', { json: { token } }).json<{ status: string; eventId: string }>(),
 
   decline: (token: string): Promise<{ message: string }> =>
     apiClient.post('invitations/decline', { json: { token } }).json<{ message: string }>(),

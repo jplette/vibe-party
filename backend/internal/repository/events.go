@@ -185,13 +185,14 @@ func (r *EventRepository) AddMember(ctx context.Context, eventID, userID uuid.UU
 	return nil
 }
 
-// ListMembers returns all members of an event.
-func (r *EventRepository) ListMembers(ctx context.Context, eventID uuid.UUID) ([]model.EventMember, error) {
+// ListMembers returns all members of an event with their user details.
+func (r *EventRepository) ListMembers(ctx context.Context, eventID uuid.UUID) ([]model.EventMemberWithUser, error) {
 	const q = `
-		SELECT event_id, user_id, role, created_at
-		FROM event_members
-		WHERE event_id = $1
-		ORDER BY created_at ASC
+		SELECT em.event_id, em.user_id, em.role, u.id, u.email, u.name
+		FROM event_members em
+		JOIN users u ON u.id = em.user_id
+		WHERE em.event_id = $1
+		ORDER BY em.created_at ASC
 	`
 	rows, err := r.db.Query(ctx, q, eventID)
 	if err != nil {
@@ -199,12 +200,14 @@ func (r *EventRepository) ListMembers(ctx context.Context, eventID uuid.UUID) ([
 	}
 	defer rows.Close()
 
-	var members []model.EventMember
+	var members []model.EventMemberWithUser
 	for rows.Next() {
-		var m model.EventMember
-		if err := rows.Scan(&m.EventID, &m.UserID, &m.Role, &m.CreatedAt); err != nil {
+		var m model.EventMemberWithUser
+		u := &model.UserBrief{}
+		if err := rows.Scan(&m.EventID, &m.UserID, &m.Role, &u.ID, &u.Email, &u.Name); err != nil {
 			return nil, fmt.Errorf("scan member: %w", err)
 		}
+		m.User = u
 		members = append(members, m)
 	}
 	return members, rows.Err()
