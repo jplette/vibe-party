@@ -163,7 +163,9 @@ export function EventSettingsPage() {
 
         {!invLoading && !invError && (invitations ?? []).length === 0 && (
           <div className={styles.emptyInvitations}>
-            <i className="pi pi-envelope" aria-hidden="true" />
+            <div className={styles.emptyInvitationsIcon} aria-hidden="true">
+              <i className="pi pi-envelope" />
+            </div>
             <p>No invitations sent yet.</p>
           </div>
         )}

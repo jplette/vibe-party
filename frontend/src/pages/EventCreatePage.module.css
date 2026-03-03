@@ -3,11 +3,11 @@
 }
 
 .card {
-  background-color: #fff;
+  background-color: var(--color-surface);
 }
 
 .card :global(.p-card-body) {
-  padding: 2rem;
+  padding: 2.25rem;
 }
 
 .card :global(.p-card-content) {

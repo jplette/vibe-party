@@ -64,7 +64,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className={styles.sidebarHeader}>
           <span className={styles.logo}>
             <i className="pi pi-star-fill" aria-hidden="true" />
-            Vibe Party
+            <span>Vibe<span className={styles.logoAccent}>Party</span></span>
           </span>
           <button
             className={styles.closeSidebar}
@@ -117,7 +117,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <i className="pi pi-bars" />
           </button>
 
-          <span className={styles.headerBrand}>Vibe Party</span>
+          <span className={styles.headerBrand}>Vibe<span className={styles.headerBrandAccent}>Party</span></span>
 
           <div className={styles.headerRight}>
             <Menu
@@ -144,7 +144,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 }}
               />
               <span className={styles.userName}>{name ?? email ?? 'Me'}</span>
-              <i className="pi pi-chevron-down" style={{ fontSize: '0.75rem' }} />
+              <i className={`pi pi-chevron-down ${styles.chevron}`} />
             </button>
           </div>
         </header>

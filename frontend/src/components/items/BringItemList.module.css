@@ -1,13 +1,13 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .center {
   display: flex;
   justify-content: center;
-  padding: 2rem;
+  padding: 2.5rem;
 }
 
 .addRow {
@@ -18,10 +18,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 3rem 1rem;
+  gap: 0.875rem;
+  padding: 3.5rem 1rem;
   color: var(--color-text-muted);
   text-align: center;
+  background-color: var(--color-surface);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.emptyIcon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-lightest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: var(--color-primary);
 }
 
 .section {
@@ -31,29 +46,32 @@
 }
 
 .sectionTitle {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-subtle);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
+  padding-bottom: 0.375rem;
 }
 
 .count {
-  background-color: var(--color-platinum);
-  border-radius: 999px;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-  color: var(--color-iron-grey);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .item {
@@ -61,20 +79,21 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 1.125rem;
   border-radius: var(--radius-md);
-  background-color: #fff;
+  background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .item:hover {
   border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-xs);
 }
 
 .itemFulfilled {
-  background-color: var(--color-bg);
-  opacity: 0.8;
+  background-color: var(--color-surface-subtle);
+  opacity: 0.7;
 }
 
 .itemLeft {
@@ -98,11 +117,13 @@
   font-weight: 500;
   color: var(--color-text);
   cursor: pointer;
+  line-height: 1.4;
+  transition: color var(--transition-fast);
 }
 
 .itemNameDone {
   text-decoration: line-through;
-  color: var(--color-text-muted);
+  color: var(--color-text-subtle);
 }
 
 .quantity {
@@ -112,13 +133,15 @@
 
 .assignTag {
   align-self: flex-start;
-  font-size: 0.75rem;
+  font-size: 0.75rem !important;
+  margin-top: 0.125rem;
 }
 
 .deleteBtn {
   flex-shrink: 0;
   opacity: 0;
   transition: opacity var(--transition-fast);
+  color: var(--color-text-subtle) !important;
 }
 
 .item:hover .deleteBtn {

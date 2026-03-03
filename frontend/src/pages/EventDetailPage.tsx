@@ -211,7 +211,9 @@ export function EventDetailPage() {
 
             {members.length === 0 ? (
               <div className={styles.emptyGuests}>
-                <i className="pi pi-users" style={{ fontSize: '2rem', color: 'var(--color-primary-light)' }} />
+                <div className={styles.emptyGuestsIcon} aria-hidden="true">
+                  <i className="pi pi-users" />
+                </div>
                 <p>No members yet. Invite some friends!</p>
               </div>
             ) : (
