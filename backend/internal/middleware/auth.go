@@ -62,7 +62,7 @@ func JWTAuth(
 				return
 			}
 
-			claims, err := validateToken(token, jwks, keycloakIssuer)
+			claims, err := validateToken(token, jwks, keycloakIssuer, clientID)
 			if err != nil {
 				// Signature failure may be due to stale cached JWKS (e.g. Keycloak
 				// restarted and generated new keys). Evict cache and retry once.
@@ -71,7 +71,7 @@ func JWTAuth(
 					evictJWKSCache(r.Context(), redisClient, logger)
 					jwks, err = fetchJWKS(r.Context(), jwksBaseURL, redisClient, logger)
 					if err == nil {
-						claims, err = validateToken(token, jwks, keycloakIssuer)
+						claims, err = validateToken(token, jwks, keycloakIssuer, clientID)
 					}
 				}
 				if err != nil {
@@ -187,11 +187,8 @@ func evictJWKSCache(ctx context.Context, redisClient *redis.Client, logger *slog
 	}
 }
 
-// validateToken parses and validates the JWT signature, issuer, and expiry.
-// Audience is intentionally not validated: Keycloak access tokens carry aud=["account"]
-// by default, not the client ID. Signature + issuer + expiry is sufficient for a
-// resource server.
-func validateToken(tokenStr string, jwks *jose.JSONWebKeySet, issuer string) (*keycloakClaims, error) {
+// validateToken parses and validates the JWT signature, issuer, audience, and expiry.
+func validateToken(tokenStr string, jwks *jose.JSONWebKeySet, issuer, clientID string) (*keycloakClaims, error) {
 	tok, err := jwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{
 		jose.RS256, jose.RS384, jose.RS512,
 		jose.ES256, jose.ES384, jose.ES512,
@@ -228,10 +225,11 @@ func validateToken(tokenStr string, jwks *jose.JSONWebKeySet, issuer string) (*k
 		return nil, fmt.Errorf("verify claims: %w", err)
 	}
 
-	// Validate issuer and expiry with a 30s clock-skew leeway.
+	// Validate issuer, audience, and expiry with a 30s clock-skew leeway.
 	expected := jwt.Expected{
-		Issuer: issuer,
-		Time:   time.Now(),
+		Issuer:      issuer,
+		AnyAudience: jwt.Audience{clientID},
+		Time:        time.Now(),
 	}
 
 	if err := claims.ValidateWithLeeway(expected, 30*time.Second); err != nil {

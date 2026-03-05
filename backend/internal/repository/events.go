@@ -213,6 +213,23 @@ func (r *EventRepository) ListMembers(ctx context.Context, eventID uuid.UUID) ([
 	return members, rows.Err()
 }
 
+// SharesEventMembership reports whether userA and userB are both members of at least one common event.
+func (r *EventRepository) SharesEventMembership(ctx context.Context, userAID, userBID uuid.UUID) (bool, error) {
+	const q = `
+		SELECT EXISTS (
+			SELECT 1
+			FROM event_members a
+			JOIN event_members b ON b.event_id = a.event_id
+			WHERE a.user_id = $1 AND b.user_id = $2
+		)
+	`
+	var exists bool
+	if err := r.db.QueryRow(ctx, q, userAID, userBID).Scan(&exists); err != nil {
+		return false, fmt.Errorf("shares event membership: %w", err)
+	}
+	return exists, nil
+}
+
 func scanEvent(row pgx.Row) (*model.Event, error) {
 	e := &model.Event{}
 	err := row.Scan(

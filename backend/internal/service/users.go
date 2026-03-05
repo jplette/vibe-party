@@ -12,12 +12,13 @@ import (
 
 // UserService handles business logic for user operations.
 type UserService struct {
-	userRepo *repository.UserRepository
+	userRepo  *repository.UserRepository
+	eventRepo *repository.EventRepository
 }
 
 // NewUserService creates a new UserService.
-func NewUserService(userRepo *repository.UserRepository) *UserService {
-	return &UserService{userRepo: userRepo}
+func NewUserService(userRepo *repository.UserRepository, eventRepo *repository.EventRepository) *UserService {
+	return &UserService{userRepo: userRepo, eventRepo: eventRepo}
 }
 
 // SyncUser ensures a local user record exists and is up to date with the JWT claims.
@@ -40,6 +41,15 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, e
 		return nil, fmt.Errorf("get user by id: %w", err)
 	}
 	return user, nil
+}
+
+// SharesEventMembership returns true if callerID and targetID share at least one event.
+func (s *UserService) SharesEventMembership(ctx context.Context, callerID, targetID uuid.UUID) (bool, error) {
+	shared, err := s.eventRepo.SharesEventMembership(ctx, callerID, targetID)
+	if err != nil {
+		return false, fmt.Errorf("shares event membership: %w", err)
+	}
+	return shared, nil
 }
 
 // GetMe returns the currently authenticated user from context.

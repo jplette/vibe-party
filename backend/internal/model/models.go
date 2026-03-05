@@ -94,6 +94,30 @@ type Invitation struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// InvitationResponse is the API-safe view of an Invitation — the Token field is omitted.
+type InvitationResponse struct {
+	ID        uuid.UUID `json:"id"`
+	EventID   uuid.UUID `json:"eventId"`
+	Email     string    `json:"email"`
+	Status    string    `json:"status"`
+	InvitedBy uuid.UUID `json:"invitedBy"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// ToResponse converts an Invitation to its API-safe representation.
+func (inv *Invitation) ToResponse() InvitationResponse {
+	return InvitationResponse{
+		ID:        inv.ID,
+		EventID:   inv.EventID,
+		Email:     inv.Email,
+		Status:    inv.Status,
+		InvitedBy: inv.InvitedBy,
+		CreatedAt: inv.CreatedAt,
+		UpdatedAt: inv.UpdatedAt,
+	}
+}
+
 // ContextKey is a typed key for context values to avoid collisions.
 type ContextKey string
 
