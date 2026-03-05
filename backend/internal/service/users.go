@@ -12,8 +12,8 @@ import (
 
 // UserService handles business logic for user operations.
 type UserService struct {
-	userRepo  *repository.UserRepository
-	eventRepo *repository.EventRepository
+	userRepo  userRepository
+	eventRepo eventRepository
 }
 
 // NewUserService creates a new UserService.

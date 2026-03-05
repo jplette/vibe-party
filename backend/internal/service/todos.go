@@ -12,8 +12,8 @@ import (
 
 // TodoService handles business logic for todos.
 type TodoService struct {
-	todoRepo  *repository.TodoRepository
-	eventRepo *repository.EventRepository
+	todoRepo  todoRepository
+	eventRepo eventRepository
 }
 
 // NewTodoService creates a new TodoService.
