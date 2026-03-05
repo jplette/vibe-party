@@ -4,7 +4,6 @@ import { useI18n } from "../i18n";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
 import { InputText } from "primereact/inputtext";
-import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 
 type RegisterKcContext = Extract<KcContext, { pageId: "register.ftl" }>;
@@ -17,6 +16,8 @@ export default function Register({ kcContext }: Props) {
     const { i18n } = useI18n({ kcContext });
     const { url, realm } = kcContext;
     const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
     const labelStyle: React.CSSProperties = {
         display: "block",
@@ -83,15 +84,36 @@ export default function Register({ kcContext }: Props) {
                     <label htmlFor="password" style={labelStyle}>
                         {i18n.msgStr("password")}
                     </label>
-                    <Password
-                        inputId="password"
-                        name="password"
-                        autoComplete="new-password"
-                        feedback
-                        toggleMask
-                        style={{ width: "100%" }}
-                        inputStyle={{ width: "100%" }}
-                    />
+                    <div style={{ position: "relative", width: "100%" }}>
+                        <InputText
+                            id="password"
+                            name="password"
+                            type={showPassword ? "text" : "password"}
+                            autoComplete="new-password"
+                            style={{ width: "100%", paddingRight: "2.75rem" }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(prev => !prev)}
+                            style={{
+                                position: "absolute",
+                                right: "0.625rem",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "0.25rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                            <i className={showPassword ? "pi pi-eye-slash" : "pi pi-eye"} style={{ fontSize: "1rem" }} />
+                        </button>
+                    </div>
                     {fieldError("password")}
                 </div>
 
@@ -99,15 +121,36 @@ export default function Register({ kcContext }: Props) {
                     <label htmlFor="password-confirm" style={labelStyle}>
                         {i18n.msgStr("passwordConfirm")}
                     </label>
-                    <Password
-                        inputId="password-confirm"
-                        name="password-confirm"
-                        autoComplete="new-password"
-                        feedback={false}
-                        toggleMask
-                        style={{ width: "100%" }}
-                        inputStyle={{ width: "100%" }}
-                    />
+                    <div style={{ position: "relative", width: "100%" }}>
+                        <InputText
+                            id="password-confirm"
+                            name="password-confirm"
+                            type={showPasswordConfirm ? "text" : "password"}
+                            autoComplete="new-password"
+                            style={{ width: "100%", paddingRight: "2.75rem" }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPasswordConfirm(prev => !prev)}
+                            style={{
+                                position: "absolute",
+                                right: "0.625rem",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "0.25rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                            aria-label={showPasswordConfirm ? "Hide password" : "Show password"}
+                        >
+                            <i className={showPasswordConfirm ? "pi pi-eye-slash" : "pi pi-eye"} style={{ fontSize: "1rem" }} />
+                        </button>
+                    </div>
                     {fieldError("password-confirm")}
                 </div>
 
@@ -120,7 +163,7 @@ export default function Register({ kcContext }: Props) {
             </form>
 
             <p style={{ textAlign: "center", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: 0 }}>
-                {i18n.msgStr("backToLogin")}{" "}
+                {i18n.msg("backToLogin")}{" "}
                 <a href={url.loginUrl} style={{ color: "var(--color-primary)", fontWeight: 700 }}>
                     {i18n.msgStr("doLogIn")}
                 </a>

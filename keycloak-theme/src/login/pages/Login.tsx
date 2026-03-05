@@ -4,7 +4,6 @@ import { useI18n } from "../i18n";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
 import { InputText } from "primereact/inputtext";
-import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 
@@ -18,6 +17,7 @@ export default function Login({ kcContext }: Props) {
     const { i18n } = useI18n({ kcContext });
     const { url, realm, login, social } = kcContext;
     const [isLoginButtonDisabled, setIsLoginButtonDisabled] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const labelStyle: React.CSSProperties = {
         display: "block",
@@ -64,39 +64,64 @@ export default function Login({ kcContext }: Props) {
                     />
                 </div>
 
-                <div style={{ marginBottom: "1rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.375rem" }}>
-                        <label htmlFor="password" style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--color-text)" }}>
-                            {i18n.msgStr("password")}
-                        </label>
+                <div style={{ marginBottom: "0.75rem" }}>
+                    <label htmlFor="password" style={{ display: "block", marginBottom: "0.375rem", fontWeight: 600, fontSize: "0.875rem", color: "var(--color-text)" }}>
+                        {i18n.msgStr("password")}
+                    </label>
+                    <div style={{ position: "relative", width: "100%" }}>
+                        <InputText
+                            id="password"
+                            name="password"
+                            type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
+                            style={{ width: "100%", paddingRight: "2.75rem" }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(prev => !prev)}
+                            style={{
+                                position: "absolute",
+                                right: "0.625rem",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "0.25rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                            <i className={showPassword ? "pi pi-eye-slash" : "pi pi-eye"} style={{ fontSize: "1rem" }} />
+                        </button>
+                    </div>
+                </div>
+
+                {(realm.rememberMe || realm.resetPasswordAllowed) && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                        {realm.rememberMe ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                <Checkbox
+                                    inputId="rememberMe"
+                                    name="rememberMe"
+                                    checked={login.rememberMe === "on"}
+                                    onChange={() => {/* controlled via form */}}
+                                />
+                                <label htmlFor="rememberMe" style={{ fontSize: "0.875rem", cursor: "pointer" }}>
+                                    {i18n.msgStr("rememberMe")}
+                                </label>
+                            </div>
+                        ) : (
+                            <span />
+                        )}
                         {realm.resetPasswordAllowed && (
                             <a href={url.loginResetCredentialsUrl} style={{ fontSize: "0.8125rem", color: "var(--color-nav)" }}>
                                 {i18n.msgStr("doForgotPassword")}
                             </a>
                         )}
-                    </div>
-                    <Password
-                        inputId="password"
-                        name="password"
-                        autoComplete="current-password"
-                        feedback={false}
-                        toggleMask
-                        style={{ width: "100%" }}
-                        inputStyle={{ width: "100%" }}
-                    />
-                </div>
-
-                {realm.rememberMe && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
-                        <Checkbox
-                            inputId="rememberMe"
-                            name="rememberMe"
-                            checked={login.rememberMe === "on"}
-                            onChange={() => {/* controlled via form */}}
-                        />
-                        <label htmlFor="rememberMe" style={{ fontSize: "0.875rem", cursor: "pointer" }}>
-                            {i18n.msgStr("rememberMe")}
-                        </label>
                     </div>
                 )}
 
