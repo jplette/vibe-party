@@ -12,8 +12,8 @@ import (
 
 // ItemService handles business logic for bring items.
 type ItemService struct {
-	itemRepo  *repository.ItemRepository
-	eventRepo *repository.EventRepository
+	itemRepo  itemRepository
+	eventRepo eventRepository
 }
 
 // NewItemService creates a new ItemService.

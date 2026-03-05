@@ -15,10 +15,10 @@ import (
 
 // InvitationService handles business logic for invitations.
 type InvitationService struct {
-	invRepo   *repository.InvitationRepository
-	eventRepo *repository.EventRepository
-	userRepo  *repository.UserRepository
-	emailSvc  *email.Service
+	invRepo   invitationRepository
+	eventRepo eventRepository
+	userRepo  userRepository
+	emailSvc  emailSender
 }
 
 // NewInvitationService creates a new InvitationService.

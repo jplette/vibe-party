@@ -12,7 +12,7 @@ import (
 
 // EventService handles business logic for events.
 type EventService struct {
-	eventRepo *repository.EventRepository
+	eventRepo eventRepository
 }
 
 // NewEventService creates a new EventService.
