@@ -13,12 +13,21 @@
   --border-radius: 10px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/*
+ * CSS reset — placed in @layer reset so it loses to @layer primereact.
+ * Layer priority order (lowest → highest): reset, primereact.
+ * That order is declared in index.html <style> before any JS/CSS loads,
+ * ensuring primereact always beats reset regardless of file import order.
+ * Our unlayered overrides below (.p-button, .p-inputtext, etc.) beat both.
+ */
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html {
@@ -55,7 +64,7 @@ a:hover {
   text-decoration: none;
 }
 
-/* App shell */
+/* App shell — column flex so .shell can use flex: 1 to fill the full viewport height */
 #root {
   min-height: 100vh;
   display: flex;
@@ -91,6 +100,12 @@ a:hover {
 .p-button.p-button-sm {
   padding: 0.4375rem 0.875rem !important;
   font-size: 0.875rem !important;
+}
+
+/* Icon-only buttons (e.g. Calendar trigger) must be square — don't apply wide text padding */
+.p-button.p-button-icon-only {
+  padding: 0.625rem !important;
+  width: auto;
 }
 
 /* Text / link buttons — extra horizontal padding is distracting, keep vertical generous */
@@ -301,21 +316,25 @@ a:hover {
   border: 1px solid var(--color-border) !important;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
+/* Scrollbar styling — only on pointer devices (mouse/trackpad) that have persistent
+   layout scrollbars. On touch/mobile devices the OS uses overlay scrollbars that
+   don't take layout space, so we leave them untouched to avoid stealing width. */
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-platinum);
-  border-radius: var(--radius-full);
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-platinum);
+    border-radius: var(--radius-full);
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-pale-slate);
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-pale-slate);
+  }
 }

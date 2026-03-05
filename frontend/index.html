@@ -9,6 +9,14 @@
     <meta property="og:description" content="Plan your next event with friends. Todos, bring-lists, and guest management in one place." />
     <meta property="og:type" content="website" />
     <title>Vibe Party</title>
+    <!--
+      Establish CSS layer priority order before any JS/CSS loads.
+      Lower → higher priority: reset, primereact.
+      This ensures PrimeReact component styles (in @layer primereact) always
+      beat our CSS reset (in @layer reset), regardless of import order.
+      Our unlayered app overrides in global.css beat both layers.
+    -->
+    <style>@layer reset, primereact;</style>
   </head>
   <body>
     <div id="root"></div>

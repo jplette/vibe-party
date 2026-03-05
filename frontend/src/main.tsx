@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PrimeReactProvider } from 'primereact/api';
 
 // PrimeReact styles — must be imported before app styles
 import 'primereact/resources/themes/lara-light-amber/theme.css';
@@ -31,8 +32,10 @@ const root = document.getElementById('root')!;
 
 ReactDOM.createRoot(root).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <PrimeReactProvider value={{ ripple: true }}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </PrimeReactProvider>
   </StrictMode>
 );

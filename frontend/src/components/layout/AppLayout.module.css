@@ -1,6 +1,9 @@
 /* ── Shell ─────────────────────────────────────────────────────────────────── */
 .shell {
   display: flex;
+  /* flex: 1 grows to fill #root's min-height: 100vh column layout.
+     min-height: 100vh is a belt-and-suspenders fallback. */
+  flex: 1;
   min-height: 100vh;
   background-color: var(--color-bg);
 }
@@ -249,9 +252,9 @@
 .content {
   flex: 1;
   padding: 2.5rem 2.5rem;
-  max-width: 1200px;
+  /* No max-width — the sidebar already constrains the available space.
+     width: 100% ensures it fills .main horizontally. */
   width: 100%;
-  margin: 0 auto;
 }
 
 /* ── Mobile overlay ──────────────────────────────────────────────────────────── */
