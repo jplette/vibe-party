@@ -2,6 +2,7 @@
   "realm": "vibe-party",
   "enabled": true,
   "displayName": "Vibe Party",
+  "loginTheme": "vibe-party",
   "sslRequired": "none",
   "registrationAllowed": true,
   "registrationEmailAsUsername": false,

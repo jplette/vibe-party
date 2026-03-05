@@ -1,4 +1,4 @@
-.PHONY: dev dev-build stop clean migrate migrate-down test test-backend test-frontend lint fmt logs
+.PHONY: dev dev-build stop clean migrate migrate-down test test-backend test-frontend lint fmt logs sync-theme-assets build-theme theme-storybook
 
 # Start all services (detached)
 dev:
@@ -66,3 +66,17 @@ seed:
 # Open psql shell
 psql:
 	docker compose exec postgres psql -U vibe -d vibe_party
+
+# Sync font files and CSS variables from frontend/ into keycloak-theme/
+sync-theme-assets:
+	cp -r frontend/public/fonts/lato keycloak-theme/public/fonts/
+	cp frontend/src/styles/_variables.css keycloak-theme/src/styles/_variables.css
+	cp frontend/src/styles/_fonts.css keycloak-theme/src/styles/_fonts.css
+
+# Build the Keycloak theme JAR (outputs to keycloak-theme/dist_keycloak/)
+build-theme:
+	cd keycloak-theme && npm run build-keycloak-theme
+
+# Run Storybook for the Keycloak theme
+theme-storybook:
+	cd keycloak-theme && npm run storybook

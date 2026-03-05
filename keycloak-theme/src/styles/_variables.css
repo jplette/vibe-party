@@ -1,0 +1,73 @@
+/* Brand color tokens for vibe-party */
+:root {
+  /* Primary palette — used as accents only */
+  --color-primary: #ff6b35;
+  --color-primary-light: #f7c59f;
+  --color-primary-lightest: #fff3ed;
+  --color-primary-dark: #e55a24;
+
+  /* Surface / background — white-first approach */
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-subtle: #fafafa;
+  --color-surface-beige: #efefd0;
+  --color-surface-beige-faint: #f9f9ee;
+  --color-surface-card: #ffffff;
+
+  /* Navigation / accent — used sparingly */
+  --color-nav: #004e89;
+  --color-nav-hover: #003d6b;
+  --color-accent: #1a659e;
+
+  /* Text */
+  --color-text: #212529;
+  --color-text-muted: #6c757d;
+  --color-text-subtle: #adb5bd;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-nav: #ffffff;
+
+  /* Grey scale */
+  --color-bg: #f8f9fa;
+  --color-platinum: #e9ecef;
+  --color-border: #e9ecef;
+  --color-border-subtle: #f0f0f0;
+  --color-pale-slate: #ced4da;
+  --color-slate-grey: #6c757d;
+  --color-iron-grey: #495057;
+  --color-gunmetal: #343a40;
+  --color-carbon-black: #212529;
+
+  /* Semantic */
+  --color-success: #28a745;
+  --color-success-bg: #f0faf3;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+  --color-info: #17a2b8;
+
+  /* Spacing */
+  --sidebar-width: 240px;
+  --header-height: 60px;
+
+  /* Radii */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* Shadows — soft and layered */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-primary: 0 4px 14px rgba(255, 107, 53, 0.20);
+  --shadow-nav: 0 4px 14px rgba(0, 78, 137, 0.12);
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-base: 220ms ease;
+  --transition-slow: 350ms ease;
+}
