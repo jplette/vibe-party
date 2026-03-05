@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -85,25 +86,11 @@ func RateLimiter(ratePerMin int) func(http.Handler) http.Handler {
 	}
 }
 
-// extractIP extracts the client IP from the request, honoring X-Forwarded-For.
 func extractIP(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		for i := 0; i < len(fwd); i++ {
-			if fwd[i] == ',' {
-				return fwd[:i]
-			}
-		}
-		return fwd
-	}
-	if real := r.Header.Get("X-Real-IP"); real != "" {
-		return real
-	}
-	// Strip port from RemoteAddr.
 	addr := r.RemoteAddr
-	for i := len(addr) - 1; i >= 0; i-- {
-		if addr[i] == ':' {
-			return addr[:i]
-		}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr
 	}
-	return addr
+	return host
 }

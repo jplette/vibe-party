@@ -28,12 +28,30 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByID handles GET /users/:id — returns a user by their internal UUID.
+// Access is restricted to the requesting user's own profile, or profiles of
+// users who share at least one event with the requester.
 func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	caller, ok := RequireUser(w, r)
+	if !ok {
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		RespondError(w, http.StatusBadRequest, "invalid user id")
 		return
+	}
+
+	if caller.ID != id {
+		shared, err := h.userSvc.SharesEventMembership(r.Context(), caller.ID, id)
+		if HandleServiceError(w, err) {
+			return
+		}
+		if !shared {
+			RespondError(w, http.StatusForbidden, "forbidden")
+			return
+		}
 	}
 
 	user, err := h.userSvc.GetByID(r.Context(), id)

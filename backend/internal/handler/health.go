@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -37,13 +38,15 @@ func (h *HealthHandler) Ready(w http.ResponseWriter, r *http.Request) {
 
 	dbOK := "ok"
 	if err := h.db.Ping(ctx); err != nil {
-		dbOK = "error: " + err.Error()
+		slog.Error("db health check failed", "error", err)
+		dbOK = "error"
 	}
 
 	redisOK := "ok"
 	if h.redis != nil {
 		if err := h.redis.Ping(ctx).Err(); err != nil {
-			redisOK = "error: " + err.Error()
+			slog.Error("redis health check failed", "error", err)
+			redisOK = "error"
 		}
 	} else {
 		redisOK = "not configured"

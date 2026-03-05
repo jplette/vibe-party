@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/vibe-party/backend/internal/model"
 	"github.com/vibe-party/backend/internal/service"
 )
 
@@ -49,7 +50,7 @@ func (h *InvitationHandler) SendInvitation(w http.ResponseWriter, r *http.Reques
 	if HandleServiceError(w, err) {
 		return
 	}
-	RespondJSON(w, http.StatusCreated, inv)
+	RespondJSON(w, http.StatusCreated, inv.ToResponse())
 }
 
 // ListInvitations handles GET /events/:id/invitations.
@@ -68,7 +69,11 @@ func (h *InvitationHandler) ListInvitations(w http.ResponseWriter, r *http.Reque
 	if HandleServiceError(w, err) {
 		return
 	}
-	RespondJSON(w, http.StatusOK, invs)
+	resp := make([]model.InvitationResponse, len(invs))
+	for i := range invs {
+		resp[i] = invs[i].ToResponse()
+	}
+	RespondJSON(w, http.StatusOK, resp)
 }
 
 // CancelInvitation handles DELETE /events/:id/invitations/:inv_id.

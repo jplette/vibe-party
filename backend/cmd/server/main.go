@@ -81,7 +81,7 @@ func main() {
 	emailSvc := email.NewService(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPFrom, cfg.FrontendURL)
 
 	// Wire up services.
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(userRepo, eventRepo)
 	eventSvc := service.NewEventService(eventRepo)
 	todoSvc := service.NewTodoService(todoRepo, eventRepo)
 	itemSvc := service.NewItemService(itemRepo, eventRepo)
