@@ -55,7 +55,7 @@ export default function LoginResetPassword({ kcContext }: Props) {
 
             <p style={{ textAlign: "center", margin: 0 }}>
                 <a href={url.loginUrl} style={{ fontSize: "0.875rem", color: "var(--color-nav)" }}>
-                    &larr; {i18n.msgStr("backToLogin")}
+                    {i18n.msg("backToLogin")}
                 </a>
             </p>
         </AuthCard>
