@@ -53,6 +53,7 @@ services:
       - "8180:8180"
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+      - ./keycloak-theme/dist_keycloak:/opt/keycloak/providers:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8180/health/ready || exit 1"]
       interval: 15s
