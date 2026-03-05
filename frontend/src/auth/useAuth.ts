@@ -6,7 +6,7 @@ import { useAuthContext } from './AuthProvider';
  * Use this in components rather than accessing the store directly.
  */
 export function useAuth() {
-  const { login, logout, silentRenew, userManager } = useAuthContext();
+  const { login, logout, silentRenew, register, userManager } = useAuthContext();
   const { accessToken, oidcUser, isAuthenticated, isLoading } = useAuthStore();
 
   const profile = oidcUser?.profile;
@@ -28,6 +28,7 @@ export function useAuth() {
     login,
     logout,
     silentRenew,
+    register,
     userManager,
   };
 }

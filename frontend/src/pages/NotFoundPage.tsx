@@ -21,7 +21,7 @@ export function NotFoundPage() {
           <Button
             label="Back to Dashboard"
             icon="pi pi-home"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
           />
           <Button
