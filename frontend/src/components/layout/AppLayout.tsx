@@ -32,7 +32,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   ];
 
   const navLinks = [
-    { to: '/', label: 'Dashboard', icon: 'pi pi-home', end: true },
+    { to: '/dashboard', label: 'Dashboard', icon: 'pi pi-home', end: true },
     { to: '/events', label: 'My Events', icon: 'pi pi-calendar' },
   ];
 

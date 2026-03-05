@@ -57,7 +57,7 @@ export function InvitationDeclinePage() {
               label="Back to Home"
               icon="pi pi-home"
               outlined
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
               style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
             />
           </>
@@ -78,7 +78,7 @@ export function InvitationDeclinePage() {
               label="Go to Home"
               icon="pi pi-home"
               outlined
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
               style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
             />
           </>

@@ -25,6 +25,7 @@ export interface MockAuthValues {
   login?: () => Promise<void>;
   logout?: () => Promise<void>;
   silentRenew?: () => Promise<void>;
+  register?: () => Promise<void>;
   accessToken?: string | null;
 }
 
@@ -39,6 +40,7 @@ export function mockUseAuth(overrides: MockAuthValues = {}) {
     login: vi.fn(),
     logout: vi.fn(),
     silentRenew: vi.fn(),
+    register: vi.fn(),
     accessToken: 'mock-access-token',
   };
   return { ...defaults, ...overrides };

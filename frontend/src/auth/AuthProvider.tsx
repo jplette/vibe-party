@@ -8,6 +8,7 @@ interface AuthContextValue {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   silentRenew: () => Promise<void>;
+  register: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -142,8 +143,12 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
     setOidcUser(user);
   };
 
+  const register = async () => {
+    await userManager.signinRedirect({ extraQueryParams: { prompt: 'create' } });
+  };
+
   return (
-    <AuthContext.Provider value={{ userManager, login, logout, silentRenew }}>
+    <AuthContext.Provider value={{ userManager, login, logout, silentRenew, register }}>
       {children}
     </AuthContext.Provider>
   );

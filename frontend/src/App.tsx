@@ -6,6 +6,9 @@ import { AuthGuard } from './auth/AuthGuard';
 import { AppLayout } from './components/layout/AppLayout';
 
 // ─── Lazy-loaded pages ──────────────────────────────────────────────────────
+const LandingPage = lazy(() =>
+  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage }))
+);
 const DashboardPage = lazy(() =>
   import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage }))
 );
@@ -72,9 +75,12 @@ export default function App() {
             <Route path="/invitations/accept" element={<InvitationAcceptPage />} />
             <Route path="/invitations/decline" element={<InvitationDeclinePage />} />
 
+            {/* ─── Public: landing page ─────────────────────────────── */}
+            <Route path="/" element={<LandingPage />} />
+
             {/* ─── Protected routes (require auth + app layout) ─────── */}
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <ProtectedPage>
                   <DashboardPage />
