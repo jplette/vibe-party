@@ -19,7 +19,11 @@ const eventSchema = z
     description: z.string().max(500, 'Description too long').optional(),
     date: z.string().optional(),
     endDate: z.string().optional(),
-    location: z.string().max(200, 'Location too long').optional(),
+    locationName:    z.string().max(200).optional(),
+    locationStreet:  z.string().max(200).optional(),
+    locationCity:    z.string().max(100).optional(),
+    locationZip:     z.string().max(20).optional(),
+    locationCountry: z.string().max(100).optional(),
   })
   .refine(
     (data) => {
@@ -63,7 +67,11 @@ export function EventForm({
       description: defaultValues?.description ?? '',
       date: defaultValues?.date ?? '',
       endDate: defaultValues?.endDate ?? '',
-      location: defaultValues?.location ?? '',
+      locationName:    defaultValues?.locationName    ?? '',
+      locationStreet:  defaultValues?.locationStreet  ?? '',
+      locationCity:    defaultValues?.locationCity    ?? '',
+      locationZip:     defaultValues?.locationZip     ?? '',
+      locationCountry: defaultValues?.locationCountry ?? '',
     },
   });
 
@@ -77,8 +85,12 @@ export function EventForm({
       name: data.name,
       description: data.description || undefined,
       date: data.date || undefined,
-      endDate: isMultiDay ? data.endDate || undefined : undefined,
-      location: data.location || undefined,
+      endDate:         isMultiDay ? data.endDate || undefined : undefined,
+      locationName:    data.locationName    || undefined,
+      locationStreet:  data.locationStreet  || undefined,
+      locationCity:    data.locationCity    || undefined,
+      locationZip:     data.locationZip     || undefined,
+      locationCountry: data.locationCountry || undefined,
     };
     await onSubmit(cleaned);
   });
@@ -224,21 +236,66 @@ export function EventForm({
 
       {/* Location */}
       <div className={styles.field}>
-        <label htmlFor="event-location" className={styles.label}>
-          Location
+        <label htmlFor="event-location-name" className={styles.label}>
+          Venue Name
         </label>
         <InputText
-          id="event-location"
-          {...register('location')}
-          placeholder="e.g. Central Park, New York"
-          className={errors.location ? 'p-invalid' : ''}
+          id="event-location-name"
+          {...register('locationName')}
+          placeholder="e.g. Central Park"
           style={{ width: '100%' }}
         />
-        {errors.location && (
-          <small className={styles.fieldError} role="alert">
-            {errors.location.message}
-          </small>
-        )}
+      </div>
+
+      <div className={styles.field}>
+        <label htmlFor="event-location-street" className={styles.label}>
+          Street
+        </label>
+        <InputText
+          id="event-location-street"
+          {...register('locationStreet')}
+          placeholder="Street address"
+          style={{ width: '100%' }}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
+            <label htmlFor="event-location-city" className={styles.label}>
+              City
+            </label>
+            <InputText
+              id="event-location-city"
+              {...register('locationCity')}
+              placeholder="City"
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div style={{ width: '120px' }}>
+            <label htmlFor="event-location-zip" className={styles.label}>
+              Zip
+            </label>
+            <InputText
+              id="event-location-zip"
+              {...register('locationZip')}
+              placeholder="Zip"
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.field}>
+        <label htmlFor="event-location-country" className={styles.label}>
+          Country
+        </label>
+        <InputText
+          id="event-location-country"
+          {...register('locationCountry')}
+          placeholder="Country"
+          style={{ width: '100%' }}
+        />
       </div>
 
       {/* Submit */}

@@ -93,12 +93,12 @@ func TestEventService_CreateEvent(t *testing.T) {
 	t.Run("creates event with valid name", func(t *testing.T) {
 		wantEvent := newEvent("Birthday Party")
 		svc := newTestEventService(&mockEventRepo{
-			CreateFn: func(_ context.Context, name, _, _ string, _, _ *string, _ uuid.UUID) (*model.Event, error) {
+			CreateFn: func(_ context.Context, name, _, _, _, _, _, _ string, _, _ *string, _ uuid.UUID) (*model.Event, error) {
 				return wantEvent, nil
 			},
 		})
 
-		got, err := svc.CreateEvent(context.Background(), "Birthday Party", "", "", nil, nil, creatorID)
+		got, err := svc.CreateEvent(context.Background(), "Birthday Party", "", "", "", "", "", "", nil, nil, creatorID)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -110,7 +110,7 @@ func TestEventService_CreateEvent(t *testing.T) {
 	t.Run("returns ErrInvalidInput when name is empty", func(t *testing.T) {
 		svc := newTestEventService(&mockEventRepo{})
 
-		_, err := svc.CreateEvent(context.Background(), "", "", "", nil, nil, creatorID)
+		_, err := svc.CreateEvent(context.Background(), "", "", "", "", "", "", "", nil, nil, creatorID)
 		if !errors.Is(err, ErrInvalidInput) {
 			t.Errorf("got %v; want ErrInvalidInput", err)
 		}
@@ -119,12 +119,12 @@ func TestEventService_CreateEvent(t *testing.T) {
 	t.Run("propagates repo error", func(t *testing.T) {
 		repoErr := errors.New("insert failed")
 		svc := newTestEventService(&mockEventRepo{
-			CreateFn: func(_ context.Context, _, _, _ string, _, _ *string, _ uuid.UUID) (*model.Event, error) {
+			CreateFn: func(_ context.Context, _, _, _, _, _, _, _ string, _, _ *string, _ uuid.UUID) (*model.Event, error) {
 				return nil, repoErr
 			},
 		})
 
-		_, err := svc.CreateEvent(context.Background(), "My Event", "", "", nil, nil, creatorID)
+		_, err := svc.CreateEvent(context.Background(), "My Event", "", "", "", "", "", "", nil, nil, creatorID)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -206,13 +206,13 @@ func TestEventService_UpdateEvent(t *testing.T) {
 				}
 				return "member", nil
 			},
-			UpdateFn: func(_ context.Context, _ uuid.UUID, name, _, _ string, _, _ *string) (*model.Event, error) {
+			UpdateFn: func(_ context.Context, _ uuid.UUID, name, _, _, _, _, _, _ string, _, _ *string) (*model.Event, error) {
 				updated.Name = name
 				return updated, nil
 			},
 		})
 
-		got, err := svc.UpdateEvent(context.Background(), eventID, adminID, "Updated Name", "", "", nil, nil)
+		got, err := svc.UpdateEvent(context.Background(), eventID, adminID, "Updated Name", "", "", "", "", "", "", nil, nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -224,7 +224,7 @@ func TestEventService_UpdateEvent(t *testing.T) {
 	t.Run("returns ErrInvalidInput when name is empty", func(t *testing.T) {
 		svc := newTestEventService(&mockEventRepo{})
 
-		_, err := svc.UpdateEvent(context.Background(), eventID, adminID, "", "", "", nil, nil)
+		_, err := svc.UpdateEvent(context.Background(), eventID, adminID, "", "", "", "", "", "", "", nil, nil)
 		if !errors.Is(err, ErrInvalidInput) {
 			t.Errorf("got %v; want ErrInvalidInput", err)
 		}
@@ -237,7 +237,7 @@ func TestEventService_UpdateEvent(t *testing.T) {
 			},
 		})
 
-		_, err := svc.UpdateEvent(context.Background(), eventID, memberID, "New Name", "", "", nil, nil)
+		_, err := svc.UpdateEvent(context.Background(), eventID, memberID, "New Name", "", "", "", "", "", "", nil, nil)
 		if !errors.Is(err, ErrForbidden) {
 			t.Errorf("got %v; want ErrForbidden", err)
 		}
@@ -250,7 +250,7 @@ func TestEventService_UpdateEvent(t *testing.T) {
 			},
 		})
 
-		_, err := svc.UpdateEvent(context.Background(), eventID, uuid.New(), "New Name", "", "", nil, nil)
+		_, err := svc.UpdateEvent(context.Background(), eventID, uuid.New(), "New Name", "", "", "", "", "", "", nil, nil)
 		if !errors.Is(err, ErrForbidden) {
 			t.Errorf("got %v; want ErrForbidden", err)
 		}
@@ -261,12 +261,12 @@ func TestEventService_UpdateEvent(t *testing.T) {
 			GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
 				return "admin", nil
 			},
-			UpdateFn: func(_ context.Context, _ uuid.UUID, _, _, _ string, _, _ *string) (*model.Event, error) {
+			UpdateFn: func(_ context.Context, _ uuid.UUID, _, _, _, _, _, _, _ string, _, _ *string) (*model.Event, error) {
 				return nil, repository.ErrNotFound
 			},
 		})
 
-		_, err := svc.UpdateEvent(context.Background(), eventID, adminID, "New Name", "", "", nil, nil)
+		_, err := svc.UpdateEvent(context.Background(), eventID, adminID, "New Name", "", "", "", "", "", "", nil, nil)
 		if !errors.Is(err, ErrNotFound) {
 			t.Errorf("got %v; want ErrNotFound", err)
 		}

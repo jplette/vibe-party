@@ -35,13 +35,13 @@ describe('EventCard', () => {
 
   it('renders the location when provided', () => {
     renderWithProviders(
-      <EventCard event={makeEvent({ location: 'Central Park' })} />
+      <EventCard event={makeEvent({ locationName: 'Central Park' })} />
     );
     expect(screen.getByText('Central Park')).toBeInTheDocument();
   });
 
   it('does not render location when absent', () => {
-    renderWithProviders(<EventCard event={makeEvent({ location: undefined })} />);
+    renderWithProviders(<EventCard event={makeEvent({ locationName: undefined, locationCity: undefined })} />);
     // No map-marker text
     expect(screen.queryByText('Central Park')).not.toBeInTheDocument();
   });

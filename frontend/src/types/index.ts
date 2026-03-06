@@ -14,7 +14,11 @@ export interface Event {
   description?: string;
   date?: string;
   endDate?: string;
-  location?: string;
+  locationName?:    string;
+  locationStreet?:  string;
+  locationCity?:    string;
+  locationZip?:     string;
+  locationCountry?: string;
   createdBy: string;
   createdAt: string;
 }
@@ -76,7 +80,11 @@ export interface EventFormValues {
   description?: string;
   date?: string;
   endDate?: string;
-  location?: string;
+  locationName?:    string;
+  locationStreet?:  string;
+  locationCity?:    string;
+  locationZip?:     string;
+  locationCountry?: string;
 }
 
 export interface TodoFormValues {

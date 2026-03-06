@@ -24,7 +24,11 @@ type Event struct {
 	Description *string    `json:"description,omitempty"`
 	Date        *time.Time `json:"date,omitempty"`
 	EndDate     *time.Time `json:"endDate,omitempty"`
-	Location    *string    `json:"location,omitempty"`
+	LocationName    *string `json:"locationName,omitempty"`
+	LocationStreet  *string `json:"locationStreet,omitempty"`
+	LocationCity    *string `json:"locationCity,omitempty"`
+	LocationZip     *string `json:"locationZip,omitempty"`
+	LocationCountry *string `json:"locationCountry,omitempty"`
 	CreatedBy   uuid.UUID  `json:"createdBy"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`

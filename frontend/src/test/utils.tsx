@@ -109,7 +109,7 @@ export function makeEvent(overrides: Partial<Event> = {}): Event {
     name: 'Test Event',
     description: 'A test event description',
     date: '2027-06-15T18:00:00Z',
-    location: 'Test Venue',
+    locationName: 'Test Venue',
     createdBy: 'user-alice',
     createdAt: '2026-01-01T10:00:00Z',
     ...overrides,
