@@ -31,6 +31,25 @@
   font-size: 0.8125rem;
 }
 
+.durationHint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
 .actions {
   display: flex;
   gap: 0.75rem;

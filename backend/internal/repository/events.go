@@ -24,7 +24,7 @@ func NewEventRepository(db *pgxpool.Pool) *EventRepository {
 // ListByUserID returns all events where the user is a member, along with their role.
 func (r *EventRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([]model.EventWithRole, error) {
 	const q = `
-		SELECT e.id, e.name, e.description, e.date, e.location, e.created_by,
+		SELECT e.id, e.name, e.description, e.date, e.end_date, e.location, e.created_by,
 		       e.created_at, e.updated_at, em.role
 		FROM events e
 		JOIN event_members em ON em.event_id = e.id
@@ -52,7 +52,7 @@ func (r *EventRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([
 }
 
 // Create inserts a new event and adds the creator as an admin member in a transaction.
-func (r *EventRepository) Create(ctx context.Context, name, description, location string, date *string, createdBy uuid.UUID) (*model.Event, error) {
+func (r *EventRepository) Create(ctx context.Context, name, description, location string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("begin tx: %w", err)
@@ -60,9 +60,9 @@ func (r *EventRepository) Create(ctx context.Context, name, description, locatio
 	defer tx.Rollback(ctx) //nolint:errcheck
 
 	const insertEvent = `
-		INSERT INTO events (name, description, date, location, created_by)
-		VALUES ($1, $2, $3::TIMESTAMPTZ, $4, $5)
-		RETURNING id, name, description, date, location, created_by, created_at, updated_at
+		INSERT INTO events (name, description, date, end_date, location, created_by)
+		VALUES ($1, $2, $3::TIMESTAMPTZ, $4::TIMESTAMPTZ, $5, $6)
+		RETURNING id, name, description, date, end_date, location, created_by, created_at, updated_at
 	`
 
 	var descPtr *string
@@ -74,7 +74,7 @@ func (r *EventRepository) Create(ctx context.Context, name, description, locatio
 		locPtr = &location
 	}
 
-	row := tx.QueryRow(ctx, insertEvent, name, descPtr, nilIfEmpty(date), locPtr, createdBy)
+	row := tx.QueryRow(ctx, insertEvent, name, descPtr, nilIfEmpty(date), nilIfEmpty(endDate), locPtr, createdBy)
 	e, err := scanEvent(row)
 	if err != nil {
 		return nil, fmt.Errorf("insert event: %w", err)
@@ -97,7 +97,7 @@ func (r *EventRepository) Create(ctx context.Context, name, description, locatio
 // GetByID fetches an event by ID.
 func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Event, error) {
 	const q = `
-		SELECT id, name, description, date, location, created_by, created_at, updated_at
+		SELECT id, name, description, date, end_date, location, created_by, created_at, updated_at
 		FROM events
 		WHERE id = $1
 	`
@@ -113,16 +113,17 @@ func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Eve
 }
 
 // Update modifies an existing event's fields.
-func (r *EventRepository) Update(ctx context.Context, id uuid.UUID, name, description, location string, date *string) (*model.Event, error) {
+func (r *EventRepository) Update(ctx context.Context, id uuid.UUID, name, description, location string, date, endDate *string) (*model.Event, error) {
 	const q = `
 		UPDATE events
 		SET name        = $2,
 		    description = $3,
 		    date        = $4::TIMESTAMPTZ,
-		    location    = $5,
+		    end_date    = $5::TIMESTAMPTZ,
+		    location    = $6,
 		    updated_at  = NOW()
 		WHERE id = $1
-		RETURNING id, name, description, date, location, created_by, created_at, updated_at
+		RETURNING id, name, description, date, end_date, location, created_by, created_at, updated_at
 	`
 	var descPtr *string
 	if description != "" {
@@ -133,7 +134,7 @@ func (r *EventRepository) Update(ctx context.Context, id uuid.UUID, name, descri
 		locPtr = &location
 	}
 
-	row := r.db.QueryRow(ctx, q, id, name, descPtr, nilIfEmpty(date), locPtr)
+	row := r.db.QueryRow(ctx, q, id, name, descPtr, nilIfEmpty(date), nilIfEmpty(endDate), locPtr)
 	e, err := scanEvent(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -237,6 +238,7 @@ func scanEvent(row pgx.Row) (*model.Event, error) {
 		&e.Name,
 		&e.Description,
 		&e.Date,
+		&e.EndDate,
 		&e.Location,
 		&e.CreatedBy,
 		&e.CreatedAt,
@@ -254,6 +256,7 @@ func scanEventWithRole(rows pgx.Rows, e *model.EventWithRole) error {
 		&e.Name,
 		&e.Description,
 		&e.Date,
+		&e.EndDate,
 		&e.Location,
 		&e.CreatedBy,
 		&e.CreatedAt,
