@@ -33,11 +33,11 @@ func (s *EventService) ListUserEvents(ctx context.Context, userID uuid.UUID) ([]
 }
 
 // CreateEvent creates a new event and adds the creator as admin.
-func (s *EventService) CreateEvent(ctx context.Context, name, description, location string, date *string, createdBy uuid.UUID) (*model.Event, error) {
+func (s *EventService) CreateEvent(ctx context.Context, name, description, location string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error) {
 	if name == "" {
 		return nil, fmt.Errorf("%w: name is required", ErrInvalidInput)
 	}
-	event, err := s.eventRepo.Create(ctx, name, description, location, date, createdBy)
+	event, err := s.eventRepo.Create(ctx, name, description, location, date, endDate, createdBy)
 	if err != nil {
 		return nil, fmt.Errorf("create event: %w", err)
 	}
@@ -66,7 +66,7 @@ func (s *EventService) GetEvent(ctx context.Context, eventID, userID uuid.UUID) 
 }
 
 // UpdateEvent updates an event, requiring the user to be an admin.
-func (s *EventService) UpdateEvent(ctx context.Context, eventID, userID uuid.UUID, name, description, location string, date *string) (*model.Event, error) {
+func (s *EventService) UpdateEvent(ctx context.Context, eventID, userID uuid.UUID, name, description, location string, date, endDate *string) (*model.Event, error) {
 	if name == "" {
 		return nil, fmt.Errorf("%w: name is required", ErrInvalidInput)
 	}
@@ -75,7 +75,7 @@ func (s *EventService) UpdateEvent(ctx context.Context, eventID, userID uuid.UUI
 		return nil, err
 	}
 
-	event, err := s.eventRepo.Update(ctx, eventID, name, description, location, date)
+	event, err := s.eventRepo.Update(ctx, eventID, name, description, location, date, endDate)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrNotFound

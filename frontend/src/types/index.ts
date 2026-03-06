@@ -13,6 +13,7 @@ export interface Event {
   name: string;
   description?: string;
   date?: string;
+  endDate?: string;
   location?: string;
   createdBy: string;
   createdAt: string;
@@ -74,6 +75,7 @@ export interface EventFormValues {
   name: string;
   description?: string;
   date?: string;
+  endDate?: string;
   location?: string;
 }
 

@@ -4,7 +4,7 @@ import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import type { Event } from '../../types';
-import { formatDate, isFuture } from '../../utils/formatDate';
+import { formatDateRange, formatDuration, isFuture } from '../../utils/formatDate';
 import styles from './EventCard.module.css';
 
 interface EventCardProps {
@@ -13,7 +13,7 @@ interface EventCardProps {
 
 export function EventCard({ event }: EventCardProps) {
   const navigate = useNavigate();
-  const upcoming = isFuture(event.date);
+  const upcoming = isFuture(event.date, event.endDate);
 
   return (
     <Card className={styles.card} onClick={() => navigate(`/events/${event.id}`)}>
@@ -42,7 +42,10 @@ export function EventCard({ event }: EventCardProps) {
             {event.date && (
               <span className={styles.metaItem}>
                 <i className="pi pi-clock" aria-label="Date" />
-                {formatDate(event.date)}
+                {formatDateRange(event.date, event.endDate)}
+                {formatDuration(event.date, event.endDate) && (
+                  <> &middot; {formatDuration(event.date, event.endDate)}</>
+                )}
               </span>
             )}
             {event.location && (

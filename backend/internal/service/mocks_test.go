@@ -15,9 +15,9 @@ import (
 
 type mockEventRepo struct {
 	ListByUserIDFn          func(ctx context.Context, userID uuid.UUID) ([]model.EventWithRole, error)
-	CreateFn                func(ctx context.Context, name, description, location string, date *string, createdBy uuid.UUID) (*model.Event, error)
+	CreateFn                func(ctx context.Context, name, description, location string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error)
 	GetByIDFn               func(ctx context.Context, id uuid.UUID) (*model.Event, error)
-	UpdateFn                func(ctx context.Context, id uuid.UUID, name, description, location string, date *string) (*model.Event, error)
+	UpdateFn                func(ctx context.Context, id uuid.UUID, name, description, location string, date, endDate *string) (*model.Event, error)
 	DeleteFn                func(ctx context.Context, id uuid.UUID) error
 	GetMemberRoleFn         func(ctx context.Context, eventID, userID uuid.UUID) (string, error)
 	AddMemberFn             func(ctx context.Context, eventID, userID uuid.UUID, role string) error
@@ -28,14 +28,14 @@ type mockEventRepo struct {
 func (m *mockEventRepo) ListByUserID(ctx context.Context, userID uuid.UUID) ([]model.EventWithRole, error) {
 	return m.ListByUserIDFn(ctx, userID)
 }
-func (m *mockEventRepo) Create(ctx context.Context, name, description, location string, date *string, createdBy uuid.UUID) (*model.Event, error) {
-	return m.CreateFn(ctx, name, description, location, date, createdBy)
+func (m *mockEventRepo) Create(ctx context.Context, name, description, location string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error) {
+	return m.CreateFn(ctx, name, description, location, date, endDate, createdBy)
 }
 func (m *mockEventRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.Event, error) {
 	return m.GetByIDFn(ctx, id)
 }
-func (m *mockEventRepo) Update(ctx context.Context, id uuid.UUID, name, description, location string, date *string) (*model.Event, error) {
-	return m.UpdateFn(ctx, id, name, description, location, date)
+func (m *mockEventRepo) Update(ctx context.Context, id uuid.UUID, name, description, location string, date, endDate *string) (*model.Event, error) {
+	return m.UpdateFn(ctx, id, name, description, location, date, endDate)
 }
 func (m *mockEventRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.DeleteFn(ctx, id)

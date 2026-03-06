@@ -106,6 +106,51 @@ a:hover {
 .p-button.p-button-icon-only {
   padding: 0.625rem !important;
   width: auto;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Calendar input group — restore the flush join that our blanket !important radius override breaks.
+   When showIcon is used, PrimeReact adds .p-calendar-w-btn and expects:
+     - the text input to have no right-side radius (it abuts the trigger button)
+     - the trigger button to have no left-side radius and normal right-side radius
+   Our global .p-inputtext { border-radius: !important } overrides those rules, so we
+   re-apply the join geometry here with higher specificity. */
+.p-calendar.p-calendar-w-btn .p-inputtext {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.p-calendar.p-calendar-w-btn .p-datepicker-trigger {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-top-right-radius: var(--radius-sm) !important;
+  border-bottom-right-radius: var(--radius-sm) !important;
+}
+
+/* Calendar date-picker trigger — neutral grey, not the CTA tangerine */
+.p-button.p-datepicker-trigger {
+  background: var(--color-border) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-slate-grey) !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+}
+
+.p-button.p-datepicker-trigger:hover {
+  background: var(--color-pale-slate) !important;
+  border-color: var(--color-pale-slate) !important;
+  color: var(--color-iron-grey) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.p-button.p-datepicker-trigger .p-button-icon {
+  color: var(--color-slate-grey);
 }
 
 /* Text / link buttons — extra horizontal padding is distracting, keep vertical generous */

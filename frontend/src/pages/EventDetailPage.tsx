@@ -17,7 +17,7 @@ import { useEvent } from '../hooks/useEvents';
 import { useEventMembers, useSendInvitation } from '../hooks/useInvitations';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useAuth } from '../auth/useAuth';
-import { formatDateTime, formatDate } from '../utils/formatDate';
+import { formatDateTimeRange, formatDate, formatDuration } from '../utils/formatDate';
 import type { InvitationFormValues } from '../types';
 import styles from './EventDetailPage.module.css';
 
@@ -93,7 +93,16 @@ export function EventDetailPage() {
 
       <PageHeader
         title={event.name}
-        subtitle={event.date ? formatDateTime(event.date) : 'Date TBD'}
+        subtitle={
+          event.date
+            ? [
+                formatDateTimeRange(event.date, event.endDate),
+                formatDuration(event.date, event.endDate),
+              ]
+                .filter(Boolean)
+                .join(' \u00b7 ')
+            : 'Date TBD'
+        }
         backTo="/events"
         backLabel="Events"
         actions={
@@ -129,7 +138,14 @@ export function EventDetailPage() {
                   <i className="pi pi-calendar" aria-hidden="true" />
                   <div>
                     <span className={styles.infoLabel}>Date</span>
-                    <span className={styles.infoValue}>{formatDateTime(event.date)}</span>
+                    <span className={styles.infoValue}>
+                      {[
+                        formatDateTimeRange(event.date, event.endDate),
+                        formatDuration(event.date, event.endDate),
+                      ]
+                        .filter(Boolean)
+                        .join(' \u00b7 ')}
+                    </span>
                   </div>
                 </div>
               )}

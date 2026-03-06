@@ -23,6 +23,7 @@ type createEventRequest struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Date        *string `json:"date"`
+	EndDate     *string `json:"endDate"`
 	Location    string  `json:"location"`
 }
 
@@ -31,6 +32,7 @@ type updateEventRequest struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Date        *string `json:"date"`
+	EndDate     *string `json:"endDate"`
 	Location    string  `json:"location"`
 }
 
@@ -66,7 +68,7 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := h.eventSvc.CreateEvent(r.Context(), req.Name, req.Description, req.Location, req.Date, user.ID)
+	event, err := h.eventSvc.CreateEvent(r.Context(), req.Name, req.Description, req.Location, req.Date, req.EndDate, user.ID)
 	if HandleServiceError(w, err) {
 		return
 	}
@@ -118,7 +120,7 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := h.eventSvc.UpdateEvent(r.Context(), eventID, user.ID, req.Name, req.Description, req.Location, req.Date)
+	event, err := h.eventSvc.UpdateEvent(r.Context(), eventID, user.ID, req.Name, req.Description, req.Location, req.Date, req.EndDate)
 	if HandleServiceError(w, err) {
 		return
 	}

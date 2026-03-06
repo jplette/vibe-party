@@ -23,6 +23,7 @@ type Event struct {
 	Name        string     `json:"name"`
 	Description *string    `json:"description,omitempty"`
 	Date        *time.Time `json:"date,omitempty"`
+	EndDate     *time.Time `json:"endDate,omitempty"`
 	Location    *string    `json:"location,omitempty"`
 	CreatedBy   uuid.UUID  `json:"createdBy"`
 	CreatedAt   time.Time  `json:"createdAt"`
