@@ -12,9 +12,9 @@ import (
 // of import cycles and allows test doubles to be injected.
 type eventRepository interface {
 	ListByUserID(ctx context.Context, userID uuid.UUID) ([]model.EventWithRole, error)
-	Create(ctx context.Context, name, description, location string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error)
+	Create(ctx context.Context, name, description, locationName, locationStreet, locationCity, locationZip, locationCountry string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Event, error)
-	Update(ctx context.Context, id uuid.UUID, name, description, location string, date, endDate *string) (*model.Event, error)
+	Update(ctx context.Context, id uuid.UUID, name, description, locationName, locationStreet, locationCity, locationZip, locationCountry string, date, endDate *string) (*model.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetMemberRole(ctx context.Context, eventID, userID uuid.UUID) (string, error)
 	AddMember(ctx context.Context, eventID, userID uuid.UUID, role string) error

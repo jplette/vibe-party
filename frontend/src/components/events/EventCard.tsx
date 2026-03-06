@@ -48,10 +48,10 @@ export function EventCard({ event }: EventCardProps) {
                 )}
               </span>
             )}
-            {event.location && (
+            {(event.locationName || event.locationCity) && (
               <span className={styles.metaItem}>
                 <i className="pi pi-map-marker" aria-label="Location" />
-                {event.location}
+                {event.locationName ?? event.locationCity}
               </span>
             )}
           </div>

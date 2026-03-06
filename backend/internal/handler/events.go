@@ -20,20 +20,28 @@ func NewEventHandler(eventSvc *service.EventService) *EventHandler {
 
 // createEventRequest is the payload for POST /events.
 type createEventRequest struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Date        *string `json:"date"`
-	EndDate     *string `json:"endDate"`
-	Location    string  `json:"location"`
+	Name            string  `json:"name"`
+	Description     string  `json:"description"`
+	Date            *string `json:"date"`
+	EndDate         *string `json:"endDate"`
+	LocationName    string  `json:"locationName"`
+	LocationStreet  string  `json:"locationStreet"`
+	LocationCity    string  `json:"locationCity"`
+	LocationZip     string  `json:"locationZip"`
+	LocationCountry string  `json:"locationCountry"`
 }
 
 // updateEventRequest is the payload for PUT /events/:id.
 type updateEventRequest struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Date        *string `json:"date"`
-	EndDate     *string `json:"endDate"`
-	Location    string  `json:"location"`
+	Name            string  `json:"name"`
+	Description     string  `json:"description"`
+	Date            *string `json:"date"`
+	EndDate         *string `json:"endDate"`
+	LocationName    string  `json:"locationName"`
+	LocationStreet  string  `json:"locationStreet"`
+	LocationCity    string  `json:"locationCity"`
+	LocationZip     string  `json:"locationZip"`
+	LocationCountry string  `json:"locationCountry"`
 }
 
 // ListEvents handles GET /events — returns all events for the current user.
@@ -68,7 +76,7 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := h.eventSvc.CreateEvent(r.Context(), req.Name, req.Description, req.Location, req.Date, req.EndDate, user.ID)
+	event, err := h.eventSvc.CreateEvent(r.Context(), req.Name, req.Description, req.LocationName, req.LocationStreet, req.LocationCity, req.LocationZip, req.LocationCountry, req.Date, req.EndDate, user.ID)
 	if HandleServiceError(w, err) {
 		return
 	}
@@ -120,7 +128,7 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := h.eventSvc.UpdateEvent(r.Context(), eventID, user.ID, req.Name, req.Description, req.Location, req.Date, req.EndDate)
+	event, err := h.eventSvc.UpdateEvent(r.Context(), eventID, user.ID, req.Name, req.Description, req.LocationName, req.LocationStreet, req.LocationCity, req.LocationZip, req.LocationCountry, req.Date, req.EndDate)
 	if HandleServiceError(w, err) {
 		return
 	}

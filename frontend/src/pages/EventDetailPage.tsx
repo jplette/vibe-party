@@ -149,15 +149,42 @@ export function EventDetailPage() {
                   </div>
                 </div>
               )}
-              {event.location && (
-                <div className={styles.infoItem}>
-                  <i className="pi pi-map-marker" aria-hidden="true" />
-                  <div>
-                    <span className={styles.infoLabel}>Location</span>
-                    <span className={styles.infoValue}>{event.location}</span>
+              {(event.locationName || event.locationStreet || event.locationCity) && (() => {
+                const mapsQuery = [
+                  event.locationStreet,
+                  event.locationCity,
+                  event.locationZip,
+                  event.locationCountry,
+                ].filter(Boolean).join(', ');
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
+                return (
+                  <div className={styles.infoItem}>
+                    <i className="pi pi-map-marker" aria-hidden="true" />
+                    <div>
+                      <span className={styles.infoLabel}>Location</span>
+                      {event.locationName && (
+                        <span className={styles.infoValue}>{event.locationName}</span>
+                      )}
+                      {mapsQuery && (
+                        <>
+                          <span className={styles.infoValue} style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                            {mapsQuery}
+                          </span>
+                          <a
+                            href={mapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
+                            <i className="pi pi-external-link" style={{ fontSize: '0.75rem' }} />
+                            Open in Google Maps
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               <div className={styles.infoItem}>
                 <i className="pi pi-calendar-plus" aria-hidden="true" />
                 <div>

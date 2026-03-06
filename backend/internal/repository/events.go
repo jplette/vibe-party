@@ -24,8 +24,9 @@ func NewEventRepository(db *pgxpool.Pool) *EventRepository {
 // ListByUserID returns all events where the user is a member, along with their role.
 func (r *EventRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([]model.EventWithRole, error) {
 	const q = `
-		SELECT e.id, e.name, e.description, e.date, e.end_date, e.location, e.created_by,
-		       e.created_at, e.updated_at, em.role
+		SELECT e.id, e.name, e.description, e.date, e.end_date,
+		       e.location_name, e.location_street, e.location_city, e.location_zip, e.location_country,
+		       e.created_by, e.created_at, e.updated_at, em.role
 		FROM events e
 		JOIN event_members em ON em.event_id = e.id
 		WHERE em.user_id = $1
@@ -52,7 +53,7 @@ func (r *EventRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([
 }
 
 // Create inserts a new event and adds the creator as an admin member in a transaction.
-func (r *EventRepository) Create(ctx context.Context, name, description, location string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error) {
+func (r *EventRepository) Create(ctx context.Context, name, description, locationName, locationStreet, locationCity, locationZip, locationCountry string, date, endDate *string, createdBy uuid.UUID) (*model.Event, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("begin tx: %w", err)
@@ -60,21 +61,19 @@ func (r *EventRepository) Create(ctx context.Context, name, description, locatio
 	defer tx.Rollback(ctx) //nolint:errcheck
 
 	const insertEvent = `
-		INSERT INTO events (name, description, date, end_date, location, created_by)
-		VALUES ($1, $2, $3::TIMESTAMPTZ, $4::TIMESTAMPTZ, $5, $6)
-		RETURNING id, name, description, date, end_date, location, created_by, created_at, updated_at
+		INSERT INTO events (name, description, date, end_date, location_name, location_street, location_city, location_zip, location_country, created_by)
+		VALUES ($1, $2, $3::TIMESTAMPTZ, $4::TIMESTAMPTZ, $5, $6, $7, $8, $9, $10)
+		RETURNING id, name, description, date, end_date, location_name, location_street, location_city, location_zip, location_country, created_by, created_at, updated_at
 	`
 
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	var locPtr *string
-	if location != "" {
-		locPtr = &location
-	}
 
-	row := tx.QueryRow(ctx, insertEvent, name, descPtr, nilIfEmpty(date), nilIfEmpty(endDate), locPtr, createdBy)
+	row := tx.QueryRow(ctx, insertEvent, name, descPtr, nilIfEmpty(date), nilIfEmpty(endDate),
+		nilIfEmptyStr(locationName), nilIfEmptyStr(locationStreet), nilIfEmptyStr(locationCity),
+		nilIfEmptyStr(locationZip), nilIfEmptyStr(locationCountry), createdBy)
 	e, err := scanEvent(row)
 	if err != nil {
 		return nil, fmt.Errorf("insert event: %w", err)
@@ -97,7 +96,7 @@ func (r *EventRepository) Create(ctx context.Context, name, description, locatio
 // GetByID fetches an event by ID.
 func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Event, error) {
 	const q = `
-		SELECT id, name, description, date, end_date, location, created_by, created_at, updated_at
+		SELECT id, name, description, date, end_date, location_name, location_street, location_city, location_zip, location_country, created_by, created_at, updated_at
 		FROM events
 		WHERE id = $1
 	`
@@ -113,28 +112,30 @@ func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Eve
 }
 
 // Update modifies an existing event's fields.
-func (r *EventRepository) Update(ctx context.Context, id uuid.UUID, name, description, location string, date, endDate *string) (*model.Event, error) {
+func (r *EventRepository) Update(ctx context.Context, id uuid.UUID, name, description, locationName, locationStreet, locationCity, locationZip, locationCountry string, date, endDate *string) (*model.Event, error) {
 	const q = `
 		UPDATE events
-		SET name        = $2,
-		    description = $3,
-		    date        = $4::TIMESTAMPTZ,
-		    end_date    = $5::TIMESTAMPTZ,
-		    location    = $6,
-		    updated_at  = NOW()
+		SET name             = $2,
+		    description      = $3,
+		    date             = $4::TIMESTAMPTZ,
+		    end_date         = $5::TIMESTAMPTZ,
+		    location_name    = $6,
+		    location_street  = $7,
+		    location_city    = $8,
+		    location_zip     = $9,
+		    location_country = $10,
+		    updated_at       = NOW()
 		WHERE id = $1
-		RETURNING id, name, description, date, end_date, location, created_by, created_at, updated_at
+		RETURNING id, name, description, date, end_date, location_name, location_street, location_city, location_zip, location_country, created_by, created_at, updated_at
 	`
 	var descPtr *string
 	if description != "" {
 		descPtr = &description
 	}
-	var locPtr *string
-	if location != "" {
-		locPtr = &location
-	}
 
-	row := r.db.QueryRow(ctx, q, id, name, descPtr, nilIfEmpty(date), nilIfEmpty(endDate), locPtr)
+	row := r.db.QueryRow(ctx, q, id, name, descPtr, nilIfEmpty(date), nilIfEmpty(endDate),
+		nilIfEmptyStr(locationName), nilIfEmptyStr(locationStreet), nilIfEmptyStr(locationCity),
+		nilIfEmptyStr(locationZip), nilIfEmptyStr(locationCountry))
 	e, err := scanEvent(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -239,7 +240,11 @@ func scanEvent(row pgx.Row) (*model.Event, error) {
 		&e.Description,
 		&e.Date,
 		&e.EndDate,
-		&e.Location,
+		&e.LocationName,
+		&e.LocationStreet,
+		&e.LocationCity,
+		&e.LocationZip,
+		&e.LocationCountry,
 		&e.CreatedBy,
 		&e.CreatedAt,
 		&e.UpdatedAt,
@@ -257,12 +262,24 @@ func scanEventWithRole(rows pgx.Rows, e *model.EventWithRole) error {
 		&e.Description,
 		&e.Date,
 		&e.EndDate,
-		&e.Location,
+		&e.LocationName,
+		&e.LocationStreet,
+		&e.LocationCity,
+		&e.LocationZip,
+		&e.LocationCountry,
 		&e.CreatedBy,
 		&e.CreatedAt,
 		&e.UpdatedAt,
 		&e.Role,
 	)
+}
+
+// nilIfEmptyStr returns nil for an empty string, allowing SQL NULL insertion.
+func nilIfEmptyStr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 // nilIfEmpty returns nil for a pointer to an empty string, allowing SQL NULL insertion.
