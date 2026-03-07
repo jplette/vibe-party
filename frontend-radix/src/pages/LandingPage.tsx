@@ -297,13 +297,12 @@ export function LandingPage() {
                 as="h1"
                 style={{
                   fontSize: 'clamp(3rem, 8vw, 5.5rem)',
-                  fontWeight: 900,
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.035em',
+                  fontWeight: 400,
+                  lineHeight: 1.1,
                   color: '#1a1a2e',
                   marginBottom: '1.5rem',
                   maxWidth: '720px',
-                  fontFamily: "'Lato', system-ui, sans-serif",
+                  fontFamily: 'var(--font-display)',
                 }}
               >
                 Plan parties.{' '}
@@ -466,11 +465,10 @@ export function LandingPage() {
                 as="h2"
                 style={{
                   fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-                  fontWeight: 800,
+                  fontWeight: 400,
                   color: '#f0ede6',
-                  letterSpacing: '-0.025em',
-                  lineHeight: 1.15,
-                  fontFamily: "'Lato', system-ui, sans-serif",
+                  lineHeight: 1.2,
+                  fontFamily: 'var(--font-display)',
                 }}
               >
                 One app. Zero coordination chaos.
@@ -544,9 +542,9 @@ export function LandingPage() {
                     size="4"
                     style={{
                       color: '#f0ede6',
-                      fontWeight: 700,
+                      fontWeight: 400,
                       marginBottom: '0.6rem',
-                      fontFamily: "'Lato', system-ui, sans-serif",
+                      fontFamily: 'var(--font-display)',
                     }}
                   >
                     {f.title}
@@ -624,12 +622,11 @@ export function LandingPage() {
                   as="h2"
                   style={{
                     fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                    fontWeight: 900,
+                    fontWeight: 400,
                     color: '#fff',
-                    letterSpacing: '-0.03em',
-                    lineHeight: 1.1,
+                    lineHeight: 1.15,
                     marginBottom: '1rem',
-                    fontFamily: "'Lato', system-ui, sans-serif",
+                    fontFamily: 'var(--font-display)',
                   }}
                 >
                   Ready to{' '}

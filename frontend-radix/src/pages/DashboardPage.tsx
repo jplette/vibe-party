@@ -24,8 +24,8 @@ export function DashboardPage() {
       {/* ── Greeting ── */}
       <Flex align="center" justify="between" mb="6" wrap="wrap" gap="3">
         <Box>
-          <Heading size="7">
-            Hey, {firstName}
+          <Heading size="7" style={{ fontFamily: 'var(--font-display)' }}>
+            Hey, {firstName} 👋
           </Heading>
           <Text color="gray" size="3" as="p" mt="1">
             Here's what's going on.
