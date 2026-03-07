@@ -15,8 +15,9 @@
   /* Surface — Beige */
   --color-surface-beige: #efefd0;
 
-  /* Brand font */
+  /* Brand fonts */
   --font-default: 'Lato', system-ui, sans-serif;
+  --font-display: 'Cherry Cream Soda', cursive;
 }
 
 .radix-themes {
