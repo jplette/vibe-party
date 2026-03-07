@@ -1,0 +1,54 @@
+:root,
+.radix-themes {
+  /* Brand accent — Atomic Tangerine */
+  --accent-9: #ff6b35;
+  --accent-10: #e55a24;
+  --accent-11: #c44b1c;
+
+  /* Navigation sidebar — Steel Azure */
+  --color-nav: #004e89;
+  --color-nav-hover: #003d6b;
+  --color-nav-active: #003060;
+  --color-nav-text: rgba(255, 255, 255, 0.9);
+  --color-nav-text-muted: rgba(255, 255, 255, 0.6);
+
+  /* Surface — Beige */
+  --color-surface-beige: #efefd0;
+
+  /* Brand font */
+  --font-default: 'Lato', system-ui, sans-serif;
+}
+
+.radix-themes {
+  font-family: var(--font-default);
+}
+
+/* Smooth mode transitions */
+.radix-themes * {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Native datetime-local input styling inside Radix TextField */
+input[type='datetime-local'] {
+  font-family: var(--font-default);
+  color-scheme: light dark;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-6);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-8);
+}
