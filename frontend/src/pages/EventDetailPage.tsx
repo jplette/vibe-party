@@ -1,38 +1,49 @@
-
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { TabView, TabPanel } from 'primereact/tabview';
-import { Button } from 'primereact/button';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Message } from 'primereact/message';
-import { Tag } from 'primereact/tag';
-import { Avatar } from 'primereact/avatar';
-import { Dialog } from 'primereact/dialog';
-import { Toast } from 'primereact/toast';
-import { PageHeader } from '../components/layout/PageHeader';
-import { TodoList } from '../components/todos/TodoList';
-import { BringItemList } from '../components/items/BringItemList';
-import { InviteForm } from '../components/invitations/InviteForm';
+import {
+  Box,
+  Flex,
+  Tabs,
+  Button,
+  Dialog,
+  Avatar,
+  Badge,
+  Text,
+  Heading,
+  Grid,
+} from '@radix-ui/themes';
+import {
+  Pencil1Icon,
+  GearIcon,
+  PersonIcon,
+  PlusIcon,
+  GlobeIcon,
+  CalendarIcon,
+  ExternalLinkIcon,
+} from '@radix-ui/react-icons';
 import { useEvent } from '../hooks/useEvents';
 import { useEventMembers, useSendInvitation } from '../hooks/useInvitations';
 import { useCurrentUser } from '../hooks/useCurrentUser';
-import { useAuth } from '../auth/useAuth';
-import { formatDateTimeRange, formatDate, formatDuration } from '../utils/formatDate';
+import { TodoList } from '../components/todos/TodoList';
+import { BringItemList } from '../components/items/BringItemList';
+import { InviteForm } from '../components/invitations/InviteForm';
+import { PageHeader } from '../components/layout/PageHeader';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { toast } from '../components/ui/ToastProvider';
+import { formatDateTimeRange, formatDuration, formatDate } from '../utils/formatDate';
 import type { InvitationFormValues } from '../types';
-import styles from './EventDetailPage.module.css';
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  useAuth();
   const { data: currentUser } = useCurrentUser();
   const dbUserId = currentUser?.id ?? null;
-  const toast = useRef<Toast>(null);
-  const [inviteVisible, setInviteVisible] = useState(false);
-  const sendInvitation = useSendInvitation(id!);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const { data: event, isLoading, isError } = useEvent(id!);
   const { data: members = [] } = useEventMembers(id!);
+  const sendInvitation = useSendInvitation(id!);
 
   const currentMember = members.find((m) => m.userId === dbUserId);
   const isAdmin = currentMember?.role === 'admin' || event?.createdBy === dbUserId;
@@ -40,263 +51,299 @@ export function EventDetailPage() {
   const handleSendInvite = async (data: InvitationFormValues) => {
     try {
       await sendInvitation.mutateAsync(data);
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Invited!',
-        detail: `Invitation sent to ${data.email}`,
-        life: 3000,
-      });
-      setInviteVisible(false);
+      toast.success('Invited!', `Invitation sent to ${data.email}`);
+      setInviteOpen(false);
     } catch {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to send invitation. They may already be invited.',
-        life: 4000,
-      });
+      toast.error('Failed to send invitation', 'They may already be invited.');
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={styles.center}>
-        <ProgressSpinner style={{ width: '56px', height: '56px' }} strokeWidth="4" />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner />;
+  if (isError || !event) return <ErrorMessage message="Event not found or failed to load." />;
 
-  if (isError || !event) {
-    return (
-      <div>
-        <PageHeader title="Event" backTo="/events" backLabel="Back to Events" />
-        <Message severity="error" text="Event not found or failed to load." />
-      </div>
-    );
-  }
+  // Build a comma-separated address for Maps link
+  const mapsQuery = [
+    event.locationStreet,
+    event.locationCity,
+    event.locationZip,
+    event.locationCountry,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const mapsUrl = mapsQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`
+    : null;
+
+  // Build subtitle: date range + optional duration
+  const dateRange = event.date ? formatDateTimeRange(event.date, event.endDate) : null;
+  const duration = event.date ? formatDuration(event.date, event.endDate) : null;
+  const subtitle = [dateRange, duration].filter(Boolean).join(' · ') || 'Date TBD';
 
   return (
-    <div className={styles.page}>
-      <Toast ref={toast} />
-      <Dialog
-        header="Invite Guest"
-        visible={inviteVisible}
-        onHide={() => setInviteVisible(false)}
-        style={{ width: '420px' }}
-        draggable={false}
-        resizable={false}
-      >
-        <p style={{ margin: '0 0 1rem', color: 'var(--color-text-muted)' }}>
-          They'll receive an email with an accept/decline link.
-        </p>
-        <InviteForm onSubmit={handleSendInvite} isLoading={sendInvitation.isPending} />
-      </Dialog>
-
+    <Box>
       <PageHeader
         title={event.name}
-        subtitle={
-          event.date
-            ? [
-                formatDateTimeRange(event.date, event.endDate),
-                formatDuration(event.date, event.endDate),
-              ]
-                .filter(Boolean)
-                .join(' \u00b7 ')
-            : 'Date TBD'
-        }
+        subtitle={subtitle}
         backTo="/events"
         backLabel="Events"
         actions={
           isAdmin ? (
-            <>
+            <Flex gap="2">
               <Button
-                label="Edit"
-                icon="pi pi-pencil"
-                outlined
-                size="small"
+                variant="outline"
+                size="2"
                 onClick={() => navigate(`/events/${id}/edit`)}
-                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-              />
+                style={{ cursor: 'pointer' }}
+              >
+                <Pencil1Icon /> Edit
+              </Button>
               <Button
-                label="Settings"
-                icon="pi pi-cog"
-                text
-                size="small"
+                variant="ghost"
+                size="2"
                 onClick={() => navigate(`/events/${id}/settings`)}
-              />
-            </>
+                style={{ cursor: 'pointer' }}
+              >
+                <GearIcon /> Settings
+              </Button>
+            </Flex>
           ) : undefined
         }
       />
 
-      <TabView className={styles.tabs}>
-        {/* ─── Info tab ───────────────────────────────────────────── */}
-        <TabPanel header="Info" leftIcon="pi pi-info-circle mr-2">
-          <div className={styles.infoTab}>
-            <div className={styles.infoGrid}>
+      {/* ── Invite Dialog ── */}
+      <Dialog.Root open={inviteOpen} onOpenChange={setInviteOpen}>
+        <Dialog.Content style={{ maxWidth: 420 }}>
+          <Dialog.Title>Invite Guest</Dialog.Title>
+          <Dialog.Description>
+            <Text color="gray" size="2">
+              They'll receive an email with an accept/decline link.
+            </Text>
+          </Dialog.Description>
+          <Box mt="4">
+            <InviteForm onSubmit={handleSendInvite} isLoading={sendInvitation.isPending} />
+          </Box>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* ── Tabs ── */}
+      <Tabs.Root defaultValue="info">
+        <Tabs.List>
+          <Tabs.Trigger value="info">Info</Tabs.Trigger>
+          <Tabs.Trigger value="todos">Todos</Tabs.Trigger>
+          <Tabs.Trigger value="items">Items</Tabs.Trigger>
+          <Tabs.Trigger value="guests">Guests ({members.length})</Tabs.Trigger>
+        </Tabs.List>
+
+        {/* ── Info tab ── */}
+        <Tabs.Content value="info">
+          <Box pt="5">
+            <Grid columns={{ initial: '1', sm: '2' }} gap="4" mb="5">
               {event.date && (
-                <div className={styles.infoItem}>
-                  <i className="pi pi-calendar" aria-hidden="true" />
-                  <div>
-                    <span className={styles.infoLabel}>Date</span>
-                    <span className={styles.infoValue}>
+                <Flex align="start" gap="2">
+                  <CalendarIcon
+                    style={{ marginTop: 2, color: '#ff6b35', flexShrink: 0, width: 16 }}
+                  />
+                  <Box>
+                    <Text size="1" color="gray" style={{ display: 'block' }}>
+                      Date
+                    </Text>
+                    <Text size="2" weight="medium">
                       {[
                         formatDateTimeRange(event.date, event.endDate),
                         formatDuration(event.date, event.endDate),
                       ]
                         .filter(Boolean)
-                        .join(' \u00b7 ')}
-                    </span>
-                  </div>
-                </div>
+                        .join(' · ')}
+                    </Text>
+                  </Box>
+                </Flex>
               )}
-              {(event.locationName || event.locationStreet || event.locationCity) && (() => {
-                const mapsQuery = [
-                  event.locationStreet,
-                  event.locationCity,
-                  event.locationZip,
-                  event.locationCountry,
-                ].filter(Boolean).join(', ');
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
-                return (
-                  <div className={styles.infoItem}>
-                    <i className="pi pi-map-marker" aria-hidden="true" />
-                    <div>
-                      <span className={styles.infoLabel}>Location</span>
-                      {event.locationName && (
-                        <span className={styles.infoValue}>{event.locationName}</span>
-                      )}
-                      {mapsQuery && (
-                        <>
-                          <span className={styles.infoValue} style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-                            {mapsQuery}
-                          </span>
-                          <a
-                            href={mapsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                          >
-                            <i className="pi pi-external-link" style={{ fontSize: '0.75rem' }} />
-                            Open in Google Maps
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className={styles.infoItem}>
-                <i className="pi pi-calendar-plus" aria-hidden="true" />
-                <div>
-                  <span className={styles.infoLabel}>Created</span>
-                  <span className={styles.infoValue}>{formatDate(event.createdAt)}</span>
-                </div>
-              </div>
-              <div className={styles.infoItem}>
-                <i className="pi pi-users" aria-hidden="true" />
-                <div>
-                  <span className={styles.infoLabel}>Members</span>
-                  <span className={styles.infoValue}>{members.length}</span>
-                </div>
-              </div>
-            </div>
+
+              {(event.locationName || mapsQuery) && (
+                <Flex align="start" gap="2">
+                  <GlobeIcon
+                    style={{ marginTop: 2, color: '#ff6b35', flexShrink: 0, width: 16 }}
+                  />
+                  <Box>
+                    <Text size="1" color="gray" style={{ display: 'block' }}>
+                      Location
+                    </Text>
+                    {event.locationName && (
+                      <Text size="2" weight="medium" style={{ display: 'block' }}>
+                        {event.locationName}
+                      </Text>
+                    )}
+                    {mapsQuery && (
+                      <Text size="1" color="gray" style={{ display: 'block' }}>
+                        {mapsQuery}
+                      </Text>
+                    )}
+                    {mapsUrl && (
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: '0.8rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          color: '#ff6b35',
+                          marginTop: 4,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        <ExternalLinkIcon style={{ width: 12 }} />
+                        Open in Maps
+                      </a>
+                    )}
+                  </Box>
+                </Flex>
+              )}
+
+              <Flex align="start" gap="2">
+                <PersonIcon
+                  style={{ marginTop: 2, color: '#ff6b35', flexShrink: 0, width: 16 }}
+                />
+                <Box>
+                  <Text size="1" color="gray" style={{ display: 'block' }}>
+                    Members
+                  </Text>
+                  <Text size="2" weight="medium">
+                    {members.length}
+                  </Text>
+                </Box>
+              </Flex>
+
+              <Flex align="start" gap="2">
+                <CalendarIcon
+                  style={{ marginTop: 2, color: '#ff6b35', flexShrink: 0, width: 16 }}
+                />
+                <Box>
+                  <Text size="1" color="gray" style={{ display: 'block' }}>
+                    Created
+                  </Text>
+                  <Text size="2" weight="medium">
+                    {formatDate(event.createdAt)}
+                  </Text>
+                </Box>
+              </Flex>
+            </Grid>
 
             {event.description && (
-              <div className={styles.descriptionSection}>
-                <h3 className={styles.descTitle}>About this event</h3>
-                <p className={styles.description}>{event.description}</p>
-              </div>
+              <Box mb="5">
+                <Heading size="3" mb="2">
+                  About this event
+                </Heading>
+                <Text size="2" color="gray" as="p">
+                  {event.description}
+                </Text>
+              </Box>
             )}
 
             {isAdmin && (
-              <div className={styles.adminActions}>
+              <Flex gap="3">
                 <Button
-                  label="Edit Event"
-                  icon="pi pi-pencil"
+                  style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
                   onClick={() => navigate(`/events/${id}/edit`)}
-                  style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
-                />
+                >
+                  <Pencil1Icon /> Edit Event
+                </Button>
                 <Button
-                  label="Manage Invitations"
-                  icon="pi pi-envelope"
-                  outlined
+                  variant="outline"
                   onClick={() => navigate(`/events/${id}/settings`)}
-                  style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
-                />
-              </div>
+                  style={{ cursor: 'pointer' }}
+                >
+                  Manage Invitations
+                </Button>
+              </Flex>
             )}
-          </div>
-        </TabPanel>
+          </Box>
+        </Tabs.Content>
 
-        {/* ─── Todos tab ──────────────────────────────────────────── */}
-        <TabPanel header="Todos" leftIcon="pi pi-check-square mr-2">
-          <TodoList eventId={id!} />
-        </TabPanel>
+        {/* ── Todos tab ── */}
+        <Tabs.Content value="todos">
+          <Box pt="5">
+            <TodoList eventId={id!} />
+          </Box>
+        </Tabs.Content>
 
-        {/* ─── Items tab ──────────────────────────────────────────── */}
-        <TabPanel header="Items" leftIcon="pi pi-shopping-bag mr-2">
-          <BringItemList eventId={id!} />
-        </TabPanel>
+        {/* ── Items tab ── */}
+        <Tabs.Content value="items">
+          <Box pt="5">
+            <BringItemList eventId={id!} />
+          </Box>
+        </Tabs.Content>
 
-        {/* ─── Guests tab ─────────────────────────────────────────── */}
-        <TabPanel header="Guests" leftIcon="pi pi-users mr-2">
-          <div className={styles.guestsTab}>
+        {/* ── Guests tab ── */}
+        <Tabs.Content value="guests">
+          <Box pt="5">
             {isAdmin && (
-              <div className={styles.guestActions}>
+              <Flex justify="end" mb="4">
                 <Button
-                  label="Invite Guest"
-                  icon="pi pi-user-plus"
-                  onClick={() => setInviteVisible(true)}
-                  style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
-                />
-              </div>
+                  style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
+                  onClick={() => setInviteOpen(true)}
+                >
+                  <PlusIcon /> Invite Guest
+                </Button>
+              </Flex>
             )}
 
             {members.length === 0 ? (
-              <div className={styles.emptyGuests}>
-                <div className={styles.emptyGuestsIcon} aria-hidden="true">
-                  <i className="pi pi-users" />
-                </div>
-                <p>No members yet. Invite some friends!</p>
-              </div>
+              <Text color="gray" size="2">
+                No members yet. Invite some friends!
+              </Text>
             ) : (
-              <div className={styles.memberList} role="list">
+              <Flex direction="column" gap="3">
                 {members.map((member) => {
-                  const initials = member.user?.name
-                    ? member.user.name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
-                    : (member.user?.email?.[0] ?? '?').toUpperCase();
+                  const nameParts = member.user?.name?.split(' ').slice(0, 2) ?? [];
+                  const initials =
+                    nameParts.length > 0
+                      ? nameParts.map((n) => n[0]).join('').toUpperCase()
+                      : (member.user?.email?.[0] ?? '?').toUpperCase();
 
                   return (
-                    <div key={member.userId} className={styles.memberItem} role="listitem">
+                    <Flex key={member.userId} align="center" gap="3">
                       <Avatar
-                        label={initials}
-                        shape="circle"
-                        style={{ backgroundColor: 'var(--color-accent)', color: '#fff', fontWeight: 700 }}
+                        size="2"
+                        fallback={initials}
+                        style={{ backgroundColor: '#ff6b35', color: '#fff', flexShrink: 0 }}
                       />
-                      <div className={styles.memberInfo}>
-                        <span className={styles.memberName}>
+                      <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="2" weight="medium">
                           {member.user?.name ?? member.user?.email ?? member.userId}
                           {member.userId === dbUserId && (
-                            <span className={styles.youBadge}> (you)</span>
+                            <Text color="gray" size="1" ml="1">
+                              (you)
+                            </Text>
                           )}
-                        </span>
+                        </Text>
                         {member.user?.email && member.user.name && (
-                          <span className={styles.memberEmail}>{member.user.email}</span>
+                          <Text
+                            size="1"
+                            color="gray"
+                            style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          >
+                            {member.user.email}
+                          </Text>
                         )}
-                      </div>
-                      <Tag
-                        value={member.role}
-                        severity={member.role === 'admin' ? 'warning' : 'secondary'}
-                        className={styles.roleTag}
-                      />
-                    </div>
+                      </Box>
+                      <Badge
+                        color={member.role === 'admin' ? 'orange' : 'gray'}
+                        variant="soft"
+                        style={{ flexShrink: 0 }}
+                      >
+                        {member.role}
+                      </Badge>
+                    </Flex>
                   );
                 })}
-              </div>
+              </Flex>
             )}
-          </div>
-        </TabPanel>
-      </TabView>
-    </div>
+          </Box>
+        </Tabs.Content>
+      </Tabs.Root>
+    </Box>
   );
 }

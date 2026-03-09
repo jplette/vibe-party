@@ -8,10 +8,8 @@ export const oidcConfig: UserManagerSettings = {
   post_logout_redirect_uri: window.location.origin,
   response_type: 'code',
   scope: 'openid profile email',
-  // PKCE is the default for 'code' flow in oidc-client-ts — no client_secret needed
   automaticSilentRenew: true,
-  // Store tokens in memory (not sessionStorage/localStorage) for XSS protection
-  userStore: undefined, // will be overridden in AuthProvider to use memory store
-  loadUserInfo: true,
+  userStore: undefined, // overridden in AuthProvider to use in-memory
+  loadUserInfo: false,
   monitorSession: false,
 };

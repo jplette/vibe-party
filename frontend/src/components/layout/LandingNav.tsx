@@ -1,47 +1,95 @@
-import { useNavigate } from 'react-router-dom';
-import { Button } from 'primereact/button';
-import { useAuth } from '../../auth/useAuth';
-import styles from './LandingNav.module.css';
+import { Box, Container, Flex, Text, Button, IconButton } from '@radix-ui/themes';
+import { SunIcon, MoonIcon } from '@radix-ui/react-icons';
+import { useAuthContext } from '../../auth/AuthProvider';
+import { useThemeStore } from '../../stores/themeStore';
 
 export function LandingNav() {
-  const { isAuthenticated, isLoading, login, register } = useAuth();
-  const navigate = useNavigate();
+  const { login, register } = useAuthContext();
+  const { mode, toggleMode } = useThemeStore();
 
   return (
-    <nav className={styles.nav} aria-label="Site navigation">
-      <a href="/" className={styles.brand} aria-label="VibeParty home">
-        <i className="pi pi-star-fill" aria-hidden="true" style={{ color: 'var(--color-primary)' }} />
-        <span>Vibe<strong>Party</strong></span>
-      </a>
+    <Box
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        backgroundColor: '#004e89',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
+      <Container size="4">
+        <Flex align="center" justify="between" py="3" px="2">
+          {/* Logo */}
+          <Flex align="center" gap="2">
+            <Box
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(255,107,53,0.4)',
+              }}
+            >
+              {/* Party popper emoji as SVG-like text — emoji is content not decoration */}
+              <span role="img" aria-hidden="true" style={{ lineHeight: 1 }}>
+                🎉
+              </span>
+            </Box>
+            <Text
+              weight="bold"
+              size="4"
+              style={{
+                color: '#fff',
+                letterSpacing: '-0.02em',
+                fontFamily: "'Lato', system-ui, sans-serif",
+              }}
+            >
+              Vibe{' '}
+              <span style={{ color: '#f7c59f' }}>Party</span>
+            </Text>
+          </Flex>
 
-      <div className={styles.links}>
-        <a href="#features" className={styles.anchorLink}>Features</a>
-      </div>
-
-      <div className={styles.actions}>
-        {!isLoading && (
-          isAuthenticated ? (
+          {/* Actions */}
+          <Flex align="center" gap="2">
+            <IconButton
+              variant="ghost"
+              size="2"
+              style={{ color: 'rgba(255,255,255,0.75)', cursor: 'pointer' }}
+              onClick={toggleMode}
+              aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {mode === 'dark' ? <SunIcon width="16" height="16" /> : <MoonIcon width="16" height="16" />}
+            </IconButton>
             <Button
-              label="Open App"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              onClick={() => navigate('/dashboard')}
-              className={styles.btnPrimary}
-              size="small"
-            />
-          ) : (
-            <>
-              <button className={styles.btnText} onClick={login}>Log in</button>
-              <Button
-                label="Sign up free"
-                onClick={register}
-                className={styles.btnPrimary}
-                size="small"
-              />
-            </>
-          )
-        )}
-      </div>
-    </nav>
+              variant="ghost"
+              size="2"
+              style={{ color: 'rgba(255,255,255,0.9)', cursor: 'pointer' }}
+              onClick={login}
+            >
+              Log In
+            </Button>
+            <Button
+              size="2"
+              style={{
+                backgroundColor: '#ff6b35',
+                color: '#fff',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(255,107,53,0.35)',
+                fontWeight: 600,
+              }}
+              onClick={register}
+            >
+              Sign Up
+            </Button>
+          </Flex>
+        </Flex>
+      </Container>
+    </Box>
   );
 }

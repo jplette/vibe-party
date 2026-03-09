@@ -1,63 +1,56 @@
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import { Box, Flex, Text, Button, TextField, Spinner } from '@radix-ui/themes';
 import type { InvitationFormValues } from '../../types';
-import styles from './InviteForm.module.css';
 
-const inviteSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+const schema = z.object({
+  email: z.string().email('Invalid email address'),
 });
 
 interface InviteFormProps {
   onSubmit: (data: InvitationFormValues) => Promise<void>;
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
 export function InviteForm({ onSubmit, isLoading }: InviteFormProps) {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
+    reset,
   } = useForm<InvitationFormValues>({
-    resolver: zodResolver(inviteSchema),
+    resolver: zodResolver(schema),
   });
 
-  const handleFormSubmit = handleSubmit(async (data) => {
+  const handleFormSubmit = async (data: InvitationFormValues) => {
     await onSubmit(data);
     reset();
-  });
+  };
 
   return (
-    <form onSubmit={handleFormSubmit} className={styles.form}>
-      <div className={styles.row}>
-        <div className={styles.fieldWrap}>
-          <InputText
-            {...register('email')}
+    <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+      <Flex direction="column" gap="3">
+        <Box>
+          <TextField.Root
             type="email"
             placeholder="friend@example.com"
-            className={`${styles.emailInput} ${errors.email ? 'p-invalid' : ''}`}
-            aria-label="Email address to invite"
-            aria-describedby={errors.email ? 'invite-email-error' : undefined}
+            disabled={isLoading}
+            aria-label="Email address"
             aria-invalid={!!errors.email}
+            {...register('email')}
           />
           {errors.email && (
-            <small id="invite-email-error" className={styles.fieldError} role="alert">
+            <Text size="1" color="red" as="p" mt="1">
               {errors.email.message}
-            </small>
+            </Text>
           )}
-        </div>
-        <Button
-          type="submit"
-          label="Send Invite"
-          icon="pi pi-send"
-          loading={isLoading}
-          style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
-        />
-      </div>
+        </Box>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? <Spinner size="1" /> : null}
+          Send Invitation
+        </Button>
+      </Flex>
     </form>
   );
 }

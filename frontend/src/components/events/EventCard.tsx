@@ -1,76 +1,82 @@
-
-import { useNavigate } from 'react-router-dom';
-import { Card } from 'primereact/card';
-import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
+import { Card, Flex, Heading, Text, Badge } from '@radix-ui/themes';
+import { CalendarIcon, GlobeIcon } from '@radix-ui/react-icons';
+import { isFuture, formatDateTimeRange, formatDate } from '../../utils/formatDate';
 import type { Event } from '../../types';
-import { formatDateRange, formatDuration, isFuture } from '../../utils/formatDate';
-import styles from './EventCard.module.css';
 
 interface EventCardProps {
   event: Event;
+  onClick: () => void;
 }
 
-export function EventCard({ event }: EventCardProps) {
-  const navigate = useNavigate();
+export function EventCard({ event, onClick }: EventCardProps) {
   const upcoming = isFuture(event.date, event.endDate);
 
   return (
-    <Card className={styles.card} onClick={() => navigate(`/events/${event.id}`)}>
-      <div className={styles.inner}>
-        <div className={styles.top}>
-          <div className={styles.iconWrap} aria-hidden="true">
-            <i className="pi pi-calendar-plus" />
-          </div>
-          {event.date && (
-            <Tag
-              value={upcoming ? 'Upcoming' : 'Past'}
-              severity={upcoming ? 'success' : 'secondary'}
-              className={styles.tag}
-            />
-          )}
-        </div>
+    <Card
+      style={{ cursor: 'pointer', transition: 'box-shadow 0.15s, transform 0.15s' }}
+      onClick={onClick}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)';
+        e.currentTarget.style.transform = 'translateY(-1px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '';
+        e.currentTarget.style.transform = '';
+      }}
+    >
+      <Flex justify="between" align="start" mb="2">
+        <Heading size="4" style={{ flex: 1, lineHeight: '1.3' }}>
+          {event.name}
+        </Heading>
+        <Badge
+          color={upcoming ? 'green' : 'gray'}
+          variant="soft"
+          ml="2"
+          style={{ flexShrink: 0 }}
+        >
+          {upcoming ? 'Upcoming' : 'Past'}
+        </Badge>
+      </Flex>
 
-        <div className={styles.body}>
-          <h2 className={styles.name}>{event.name}</h2>
+      {event.date && (
+        <Flex align="center" gap="1" mb="1">
+          <CalendarIcon style={{ color: 'var(--gray-9)', width: 13, height: 13, flexShrink: 0 }} />
+          <Text size="1" color="gray">
+            {formatDateTimeRange(event.date, event.endDate)}
+          </Text>
+        </Flex>
+      )}
 
-          {event.description && (
-            <p className={styles.description}>{event.description}</p>
-          )}
+      {event.locationName && (
+        <Flex align="center" gap="1" mb="2">
+          <GlobeIcon style={{ color: 'var(--gray-9)', width: 13, height: 13, flexShrink: 0 }} />
+          <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {event.locationName}
+          </Text>
+        </Flex>
+      )}
 
-          <div className={styles.meta}>
-            {event.date && (
-              <span className={styles.metaItem}>
-                <i className="pi pi-clock" aria-label="Date" />
-                {formatDateRange(event.date, event.endDate)}
-                {formatDuration(event.date, event.endDate) && (
-                  <> &middot; {formatDuration(event.date, event.endDate)}</>
-                )}
-              </span>
-            )}
-            {(event.locationName || event.locationCity) && (
-              <span className={styles.metaItem}>
-                <i className="pi pi-map-marker" aria-label="Location" />
-                {event.locationName ?? event.locationCity}
-              </span>
-            )}
-          </div>
-        </div>
+      {event.description && (
+        <Text
+          size="2"
+          color="gray"
+          mb="2"
+          style={
+            {
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            } as React.CSSProperties
+          }
+        >
+          {event.description}
+        </Text>
+      )}
 
-        <div className={styles.footer}>
-          <Button
-            label="View Event"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            text
-            className={styles.viewBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/events/${event.id}`);
-            }}
-          />
-        </div>
-      </div>
+      <Text size="1" color="gray" mt="3" style={{ display: 'block' }}>
+        Created {formatDate(event.createdAt)}
+      </Text>
     </Card>
   );
 }

@@ -1,61 +1,29 @@
-import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Toast } from 'primereact/toast';
-import { Card } from 'primereact/card';
-import { PageHeader } from '../components/layout/PageHeader';
-import { EventForm } from '../components/events/EventForm';
+import { Box } from '@radix-ui/themes';
 import { useCreateEvent } from '../hooks/useEvents';
+import { EventForm } from '../components/events/EventForm';
+import { PageHeader } from '../components/layout/PageHeader';
+import { toast } from '../components/ui/ToastProvider';
 import type { EventFormValues } from '../types';
-import styles from './EventCreatePage.module.css';
 
 export function EventCreatePage() {
   const navigate = useNavigate();
-  const createEvent = useCreateEvent();
-  const toast = useRef<Toast>(null);
+  const { mutateAsync, isPending } = useCreateEvent();
 
   const handleSubmit = async (data: EventFormValues) => {
     try {
-      const created = await createEvent.mutateAsync(data);
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Event created!',
-        detail: `"${created.name}" is ready.`,
-        life: 3000,
-      });
-      navigate(`/events/${created.id}`);
+      const event = await mutateAsync(data);
+      toast.success('Event created!', event.name);
+      navigate(`/events/${event.id}`);
     } catch {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to create event. Please try again.',
-        life: 4000,
-      });
+      toast.error('Failed to create event', 'Please try again.');
     }
   };
 
   return (
-    <div className={styles.page}>
-      <Toast ref={toast} />
-
-      <PageHeader
-        title="Create Event"
-        subtitle="Fill in the details for your new event"
-        backTo="/events"
-        backLabel="Back to Events"
-      />
-
-      <Card className={styles.card}>
-        <EventForm
-          onSubmit={handleSubmit}
-          submitLabel="Create Event"
-          isLoading={createEvent.isPending}
-          errorMessage={
-            createEvent.isError
-              ? 'Failed to create event. Please check your input and try again.'
-              : undefined
-          }
-        />
-      </Card>
-    </div>
+    <Box style={{ maxWidth: 640 }}>
+      <PageHeader title="Create Event" backTo="/events" backLabel="Back to Events" />
+      <EventForm onSubmit={handleSubmit} isLoading={isPending} submitLabel="Create Event" />
+    </Box>
   );
 }

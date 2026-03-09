@@ -1,50 +1,25 @@
 import { useEffect } from 'react';
-import { ProgressSpinner } from 'primereact/progressspinner';
+import { Flex, Spinner } from '@radix-ui/themes';
 import { useAuth } from './useAuth';
 
-interface AuthGuardProps {
-  children: React.ReactNode;
-}
-
-/**
- * Wraps protected routes.
- * - While loading: show spinner
- * - If unauthenticated: redirect to Keycloak login
- * - If authenticated: render children
- */
-export function AuthGuard({ children }: AuthGuardProps) {
+export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, login } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      login();
+      login().catch(console.error);
     }
   }, [isLoading, isAuthenticated, login]);
 
   if (isLoading) {
     return (
-      <div className="page-loading">
-        <ProgressSpinner
-          style={{ width: '60px', height: '60px' }}
-          strokeWidth="4"
-          animationDuration=".8s"
-        />
-      </div>
+      <Flex align="center" justify="center" style={{ minHeight: '100vh' }}>
+        <Spinner size="3" />
+      </Flex>
     );
   }
 
-  if (!isAuthenticated) {
-    // Redirecting to login — show spinner while redirect happens
-    return (
-      <div className="page-loading">
-        <ProgressSpinner
-          style={{ width: '60px', height: '60px' }}
-          strokeWidth="4"
-          animationDuration=".8s"
-        />
-      </div>
-    );
-  }
+  if (!isAuthenticated) return null;
 
   return <>{children}</>;
 }

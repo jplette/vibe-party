@@ -1,385 +1,53 @@
-@import './_variables.css';
-@import './_fonts.css';
-
-/* PrimeReact theme overrides — applied after theme import in main.tsx */
-:root {
-  --primary-color: #ff6b35;
-  --primary-color-text: #ffffff;
-  --surface-ground: #ffffff;
-  --surface-card: #ffffff;
-  --surface-border: #e9ecef;
-  --text-color: #212529;
-  --text-color-secondary: #6c757d;
-  --border-radius: 10px;
-}
-
-/*
- * CSS reset — placed in @layer reset so it loses to @layer primereact.
- * Layer priority order (lowest → highest): reset, primereact.
- * That order is declared in index.html <style> before any JS/CSS loads,
- * ensuring primereact always beats reset regardless of file import order.
- * Our unlayered overrides below (.p-button, .p-inputtext, etc.) beat both.
- */
-@layer reset {
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  font-family: 'Lato', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--color-text);
-  background-color: var(--color-bg);
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--color-text);
-  letter-spacing: -0.01em;
+body {
+  height: 100%;
+  font-family: var(--font-default, 'Lato', system-ui, sans-serif);
+}
+
+#root {
+  height: 100%;
 }
 
 a {
-  color: var(--color-accent);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-a:hover {
-  color: var(--color-nav);
+  color: inherit;
   text-decoration: none;
 }
 
-/* App shell — column flex so .shell can use flex: 1 to fill the full viewport height */
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
 }
 
-/* Utility classes */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+input,
+button,
+textarea,
+select {
+  font: inherit;
 }
 
-/* ── PrimeReact global overrides ─────────────────────────────────────────── */
-
-.p-button {
-  font-family: 'Lato', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  border-radius: var(--radius-sm) !important;
-  transition: all var(--transition-fast) !important;
-  padding: 0.625rem 1.25rem !important;
-  gap: 0.4375rem;
-}
-
-/* Small buttons keep a tighter footprint */
-.p-button.p-button-sm {
-  padding: 0.4375rem 0.875rem !important;
-  font-size: 0.875rem !important;
-}
-
-/* Icon-only buttons (e.g. Calendar trigger) must be square — don't apply wide text padding */
-.p-button.p-button-icon-only {
-  padding: 0.625rem !important;
-  width: auto;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Calendar input group — restore the flush join that our blanket !important radius override breaks.
-   When showIcon is used, PrimeReact adds .p-calendar-w-btn and expects:
-     - the text input to have no right-side radius (it abuts the trigger button)
-     - the trigger button to have no left-side radius and normal right-side radius
-   Our global .p-inputtext { border-radius: !important } overrides those rules, so we
-   re-apply the join geometry here with higher specificity. */
-.p-calendar.p-calendar-w-btn .p-inputtext {
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-}
-
-.p-calendar.p-calendar-w-btn .p-datepicker-trigger {
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  border-top-right-radius: var(--radius-sm) !important;
-  border-bottom-right-radius: var(--radius-sm) !important;
-}
-
-/* Calendar date-picker trigger — neutral grey, not the CTA tangerine */
-.p-button.p-datepicker-trigger {
-  background: var(--color-border) !important;
-  border-color: var(--color-border) !important;
-  color: var(--color-slate-grey) !important;
-  box-shadow: none !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
-}
-
-.p-button.p-datepicker-trigger:hover {
-  background: var(--color-pale-slate) !important;
-  border-color: var(--color-pale-slate) !important;
-  color: var(--color-iron-grey) !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.p-button.p-datepicker-trigger .p-button-icon {
-  color: var(--color-slate-grey);
-}
-
-/* Text / link buttons — extra horizontal padding is distracting, keep vertical generous */
-.p-button.p-button-text,
-.p-button.p-button-link {
-  padding: 0.5rem 0.75rem !important;
-}
-
-/* Primary buttons */
-.p-button.p-button-primary,
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger) {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-primary);
-}
-
-.p-button.p-button-primary:hover,
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger):hover {
-  background: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.28);
-}
-
-.p-button:active {
-  transform: translateY(0) !important;
-}
-
-/* Page loading */
-.page-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background-color: var(--color-bg);
-}
-
-/* Card overrides */
-.p-card {
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-sm) !important;
-  border: 1px solid var(--color-border) !important;
-}
-
-/* Tab view overrides */
-.p-tabview .p-tabview-nav {
-  background: transparent;
-  border-color: var(--color-border);
-  border-bottom-width: 1px;
-}
-
-.p-tabview .p-tabview-nav li .p-tabview-nav-link {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  border-color: transparent;
-  background: transparent;
-  padding: 0.875rem 1.125rem;
-  transition: color var(--transition-fast);
-}
-
-.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  border-bottom-width: 2px;
-  background: transparent;
-}
-
-.p-tabview .p-tabview-nav li:not(.p-highlight) .p-tabview-nav-link:hover {
-  color: var(--color-text);
-  background: transparent;
-  border-color: transparent;
-}
-
-.p-tabview .p-tabview-panels {
-  background: transparent;
-  padding: 1.5rem 0 0;
-}
-
-/* Input overrides */
-.p-inputtext {
-  border-color: var(--color-border);
-  border-radius: var(--radius-sm) !important;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.p-inputtext:enabled:hover {
-  border-color: var(--color-pale-slate);
-}
-
-.p-inputtext:enabled:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.12);
-  outline: none;
-}
-
-/* Dialog overrides */
-.p-dialog {
-  border-radius: var(--radius-xl) !important;
-  box-shadow: var(--shadow-xl) !important;
-  border: 1px solid var(--color-border) !important;
-}
-
-.p-dialog .p-dialog-header {
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  padding: 1.5rem 1.75rem 1rem;
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.p-dialog .p-dialog-content {
-  padding: 1.25rem 1.75rem 1.5rem;
-}
-
-.p-dialog .p-dialog-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-/* Menu overrides */
-.p-menu {
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-lg) !important;
-  border: 1px solid var(--color-border) !important;
-  padding: 0.375rem !important;
-  min-width: 180px !important;
-}
-
-/* Submenu header — the user name label at the top */
-.p-menu .p-submenu-header {
-  font-family: 'Lato', system-ui, sans-serif !important;
-  font-size: 0.75rem !important;
-  font-weight: 700 !important;
-  color: var(--color-text-subtle) !important;
-  background: transparent !important;
-  padding: 0.5rem 0.75rem 0.4375rem !important;
-  margin: 0 0 0.25rem !important;
-  letter-spacing: 0.04em !important;
-  text-transform: uppercase !important;
-  border-bottom: 1px solid var(--color-border) !important;
-}
-
-.p-menu .p-menuitem-link {
-  border-radius: var(--radius-sm) !important;
-  padding: 0.5rem 0.75rem !important;
-  gap: 0.5rem !important;
-  transition: background-color var(--transition-fast) !important;
-  font-family: 'Lato', system-ui, sans-serif !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
-  color: var(--color-text) !important;
-  text-decoration: none !important;
-}
-
-.p-menu .p-menuitem-link:hover {
-  background-color: var(--color-bg) !important;
-  color: var(--color-text) !important;
-}
-
-.p-menu .p-menuitem-link .p-menuitem-icon {
-  font-size: 0.875rem !important;
-  color: var(--color-text-muted) !important;
-  width: 1rem !important;
-  flex-shrink: 0 !important;
-}
-
-.p-menu .p-menuitem-link:hover .p-menuitem-icon {
-  color: var(--color-text) !important;
-}
-
-.p-menu .p-menuitem-link .p-menuitem-text {
-  font-weight: 500 !important;
-  line-height: 1 !important;
-}
-
-/* Tag overrides */
-.p-tag {
-  border-radius: var(--radius-full) !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  padding: 0.25rem 0.625rem !important;
-}
-
-/* Toast overrides */
-.p-toast .p-toast-message {
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-lg) !important;
-}
-
-/* Dropdown overrides */
-.p-dropdown {
-  border-radius: var(--radius-sm) !important;
-  border-color: var(--color-border);
-}
-
-.p-dropdown:not(.p-disabled):hover {
-  border-color: var(--color-pale-slate);
-}
-
-.p-dropdown:not(.p-disabled).p-focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.12);
-}
-
-.p-dropdown-panel {
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-lg) !important;
-  border: 1px solid var(--color-border) !important;
-}
-
-/* Scrollbar styling — only on pointer devices (mouse/trackpad) that have persistent
-   layout scrollbars. On touch/mobile devices the OS uses overlay scrollbars that
-   don't take layout space, so we leave them untouched to avoid stealing width. */
-@media (hover: hover) and (pointer: fine) {
-  ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-platinum);
-    border-radius: var(--radius-full);
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-pale-slate);
-  }
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
 }

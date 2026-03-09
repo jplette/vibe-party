@@ -1,138 +1,182 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { AuthProvider } from './auth/AuthProvider';
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import { AuthGuard } from './auth/AuthGuard';
 import { AppLayout } from './components/layout/AppLayout';
+import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
-// ─── Lazy-loaded pages ──────────────────────────────────────────────────────
+// ─── Lazy page imports ────────────────────────────────────────────────────────
+
+// Public pages
 const LandingPage = lazy(() =>
-  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage }))
-);
-const DashboardPage = lazy(() =>
-  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage }))
-);
-const EventListPage = lazy(() =>
-  import('./pages/EventListPage').then((m) => ({ default: m.EventListPage }))
-);
-const EventCreatePage = lazy(() =>
-  import('./pages/EventCreatePage').then((m) => ({ default: m.EventCreatePage }))
-);
-const EventDetailPage = lazy(() =>
-  import('./pages/EventDetailPage').then((m) => ({ default: m.EventDetailPage }))
-);
-const EventEditPage = lazy(() =>
-  import('./pages/EventEditPage').then((m) => ({ default: m.EventEditPage }))
-);
-const EventSettingsPage = lazy(() =>
-  import('./pages/EventSettingsPage').then((m) => ({ default: m.EventSettingsPage }))
+  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })),
 );
 const CallbackPage = lazy(() =>
-  import('./pages/auth/CallbackPage').then((m) => ({ default: m.CallbackPage }))
+  import('./pages/auth/CallbackPage').then((m) => ({ default: m.CallbackPage })),
 );
 const SilentRenewPage = lazy(() =>
-  import('./pages/auth/SilentRenewPage').then((m) => ({ default: m.SilentRenewPage }))
+  import('./pages/auth/SilentRenewPage').then((m) => ({ default: m.SilentRenewPage })),
 );
 const InvitationAcceptPage = lazy(() =>
-  import('./pages/InvitationAcceptPage').then((m) => ({ default: m.InvitationAcceptPage }))
+  import('./pages/InvitationAcceptPage').then((m) => ({ default: m.InvitationAcceptPage })),
 );
 const InvitationDeclinePage = lazy(() =>
-  import('./pages/InvitationDeclinePage').then((m) => ({ default: m.InvitationDeclinePage }))
+  import('./pages/InvitationDeclinePage').then((m) => ({ default: m.InvitationDeclinePage })),
 );
 const NotFoundPage = lazy(() =>
-  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
 );
 
-// ─── Protected page wrapper ──────────────────────────────────────────────────
-function ProtectedPage({ children }: { children: React.ReactNode }) {
+// Protected pages
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
+const EventListPage = lazy(() =>
+  import('./pages/EventListPage').then((m) => ({ default: m.EventListPage })),
+);
+const EventCreatePage = lazy(() =>
+  import('./pages/EventCreatePage').then((m) => ({ default: m.EventCreatePage })),
+);
+const EventDetailPage = lazy(() =>
+  import('./pages/EventDetailPage').then((m) => ({ default: m.EventDetailPage })),
+);
+const EventEditPage = lazy(() =>
+  import('./pages/EventEditPage').then((m) => ({ default: m.EventEditPage })),
+);
+const EventSettingsPage = lazy(() =>
+  import('./pages/EventSettingsPage').then((m) => ({ default: m.EventSettingsPage })),
+);
+
+// ─── Suspense wrapper ─────────────────────────────────────────────────────────
+
+function SuspenseWrap({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>;
+}
+
+// ─── Protected layout: AuthGuard + AppLayout + nested Outlet ─────────────────
+
+function ProtectedLayout() {
   return (
     <AuthGuard>
-      <AppLayout>{children}</AppLayout>
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
     </AuthGuard>
   );
 }
 
-// ─── Loading fallback ────────────────────────────────────────────────────────
-function PageFallback() {
-  return (
-    <div className="page-loading">
-      <ProgressSpinner style={{ width: '48px', height: '48px' }} strokeWidth="4" />
-    </div>
-  );
-}
+// ─── Router ───────────────────────────────────────────────────────────────────
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            {/* ─── Public: auth callback & silent renew ─────────────── */}
-            <Route path="/auth/callback" element={<CallbackPage />} />
-            <Route path="/auth/silent-renew" element={<SilentRenewPage />} />
+export const router = createBrowserRouter([
+  // Public routes
+  {
+    path: '/',
+    element: (
+      <SuspenseWrap>
+        <LandingPage />
+      </SuspenseWrap>
+    ),
+  },
+  {
+    path: '/auth/callback',
+    element: (
+      <SuspenseWrap>
+        <CallbackPage />
+      </SuspenseWrap>
+    ),
+  },
+  {
+    path: '/auth/silent-renew',
+    element: (
+      <SuspenseWrap>
+        <SilentRenewPage />
+      </SuspenseWrap>
+    ),
+  },
+  {
+    path: '/invitation/accept',
+    element: (
+      <SuspenseWrap>
+        <InvitationAcceptPage />
+      </SuspenseWrap>
+    ),
+  },
+  {
+    path: '/invitation/decline',
+    element: (
+      <SuspenseWrap>
+        <InvitationDeclinePage />
+      </SuspenseWrap>
+    ),
+  },
 
-            {/* ─── Public: invitation accept / decline ──────────────── */}
-            <Route path="/invitations/accept" element={<InvitationAcceptPage />} />
-            <Route path="/invitations/decline" element={<InvitationDeclinePage />} />
+  // Protected routes — wrapped in AuthGuard + AppLayout via ProtectedLayout
+  {
+    element: <ProtectedLayout />,
+    children: [
+      {
+        path: '/dashboard',
+        element: (
+          <SuspenseWrap>
+            <DashboardPage />
+          </SuspenseWrap>
+        ),
+      },
+      {
+        path: '/events',
+        element: (
+          <SuspenseWrap>
+            <EventListPage />
+          </SuspenseWrap>
+        ),
+      },
+      {
+        path: '/events/new',
+        element: (
+          <SuspenseWrap>
+            <EventCreatePage />
+          </SuspenseWrap>
+        ),
+      },
+      {
+        path: '/events/:id',
+        element: (
+          <SuspenseWrap>
+            <EventDetailPage />
+          </SuspenseWrap>
+        ),
+      },
+      {
+        path: '/events/:id/edit',
+        element: (
+          <SuspenseWrap>
+            <EventEditPage />
+          </SuspenseWrap>
+        ),
+      },
+      {
+        path: '/events/:id/settings',
+        element: (
+          <SuspenseWrap>
+            <EventSettingsPage />
+          </SuspenseWrap>
+        ),
+      },
+    ],
+  },
 
-            {/* ─── Public: landing page ─────────────────────────────── */}
-            <Route path="/" element={<LandingPage />} />
+  // 404 catch-all
+  {
+    path: '*',
+    element: (
+      <SuspenseWrap>
+        <NotFoundPage />
+      </SuspenseWrap>
+    ),
+  },
+]);
 
-            {/* ─── Protected routes (require auth + app layout) ─────── */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedPage>
-                  <DashboardPage />
-                </ProtectedPage>
-              }
-            />
-            <Route
-              path="/events"
-              element={
-                <ProtectedPage>
-                  <EventListPage />
-                </ProtectedPage>
-              }
-            />
-            <Route
-              path="/events/new"
-              element={
-                <ProtectedPage>
-                  <EventCreatePage />
-                </ProtectedPage>
-              }
-            />
-            <Route
-              path="/events/:id"
-              element={
-                <ProtectedPage>
-                  <EventDetailPage />
-                </ProtectedPage>
-              }
-            />
-            <Route
-              path="/events/:id/edit"
-              element={
-                <ProtectedPage>
-                  <EventEditPage />
-                </ProtectedPage>
-              }
-            />
-            <Route
-              path="/events/:id/settings"
-              element={
-                <ProtectedPage>
-                  <EventSettingsPage />
-                </ProtectedPage>
-              }
-            />
+// ─── App root ─────────────────────────────────────────────────────────────────
 
-            {/* ─── 404 ──────────────────────────────────────────────── */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
-    </BrowserRouter>
-  );
+export function App() {
+  return <RouterProvider router={router} />;
 }

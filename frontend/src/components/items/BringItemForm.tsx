@@ -1,109 +1,71 @@
-
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
-import { Dropdown } from 'primereact/dropdown';
-import type { BringItemFormValues, EventMember } from '../../types';
-import styles from './BringItemForm.module.css';
-
-const itemSchema = z.object({
-  name: z.string().min(1, 'Item name is required').max(200),
-  quantity: z.string().max(50).optional(),
-  assignedTo: z.string().optional(),
-});
+import { useState } from 'react';
+import { Box, Flex, Text, Button, TextField, Spinner } from '@radix-ui/themes';
+import { useCreateItem } from '../../hooks/useItems';
+import type { BringItemFormValues } from '../../types';
 
 interface BringItemFormProps {
-  members: EventMember[];
-  onSubmit: (data: BringItemFormValues) => Promise<void>;
-  onCancel: () => void;
-  isLoading?: boolean;
+  eventId: string;
+  onSuccess?: () => void;
 }
 
-export function BringItemForm({ members, onSubmit, onCancel, isLoading }: BringItemFormProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<BringItemFormValues>({
-    resolver: zodResolver(itemSchema),
-  });
+export function BringItemForm({ eventId, onSuccess }: BringItemFormProps) {
+  const [name, setName] = useState('');
+  const [quantity, setQuantity] = useState('');
 
-  const memberOptions = members.map((m) => ({
-    label: m.user?.name ?? m.user?.email ?? m.userId,
-    value: m.userId,
-  }));
+  const createItem = useCreateItem(eventId);
 
-  const handleFormSubmit = handleSubmit(async (data) => {
-    await onSubmit({
-      name: data.name,
-      quantity: data.quantity || undefined,
-      assignedTo: data.assignedTo || undefined,
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    const values: BringItemFormValues = {
+      name: trimmedName,
+      quantity: quantity.trim() || undefined,
+    };
+
+    createItem.mutate(values, {
+      onSuccess: () => {
+        setName('');
+        setQuantity('');
+        onSuccess?.();
+      },
     });
-    reset();
-  });
+  };
 
   return (
-    <form onSubmit={handleFormSubmit} className={styles.form}>
-      <div className={styles.row}>
-        <div className={styles.fieldGroup}>
-          <InputText
-            {...register('name')}
-            placeholder="Item name..."
-            className={errors.name ? 'p-invalid' : ''}
-            autoFocus
-            aria-label="Item name"
+    <form onSubmit={handleSubmit}>
+      <Flex gap="2" align="end">
+        <Box style={{ flex: 2 }}>
+          <Text size="1" mb="1" as="label" htmlFor="bring-item-name" color="gray" weight="medium">
+            Item name
+          </Text>
+          <TextField.Root
+            id="bring-item-name"
+            placeholder="e.g. Chips"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={createItem.isPending}
+            required
           />
-          {errors.name && (
-            <small className={styles.fieldError}>{errors.name.message}</small>
-          )}
-        </div>
-
-        <InputText
-          {...register('quantity')}
-          placeholder="Qty (e.g. 2 bottles)"
-          className={styles.qtyInput}
-          aria-label="Quantity"
-        />
-
-        {memberOptions.length > 0 && (
-          <Controller
-            name="assignedTo"
-            control={control}
-            render={({ field }) => (
-              <Dropdown
-                value={field.value}
-                onChange={(e) => field.onChange(e.value)}
-                options={memberOptions}
-                placeholder="Bring by..."
-                showClear
-                className={styles.assignDropdown}
-              />
-            )}
+        </Box>
+        <Box style={{ flex: 1 }}>
+          <Text size="1" mb="1" as="label" htmlFor="bring-item-qty" color="gray" weight="medium">
+            Quantity
+          </Text>
+          <TextField.Root
+            id="bring-item-qty"
+            placeholder="e.g. 2 bags"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            disabled={createItem.isPending}
           />
-        )}
-      </div>
-
-      <div className={styles.actions}>
-        <Button
-          type="submit"
-          label="Add Item"
-          icon="pi pi-check"
-          size="small"
-          loading={isLoading}
-          style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
-        />
-        <Button
-          type="button"
-          label="Cancel"
-          size="small"
-          text
-          onClick={onCancel}
-        />
-      </div>
+        </Box>
+        <Button type="submit" disabled={createItem.isPending || !name.trim()}>
+          {createItem.isPending ? <Spinner size="1" /> : null}
+          Add
+        </Button>
+      </Flex>
     </form>
   );
 }

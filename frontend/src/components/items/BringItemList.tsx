@@ -1,183 +1,151 @@
-import { useState } from 'react';
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
-import { Tag } from 'primereact/tag';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Message } from 'primereact/message';
+import {
+  Box,
+  Flex,
+  Text,
+  Badge,
+  Checkbox,
+  IconButton,
+  Separator,
+  Spinner,
+  Callout,
+} from '@radix-ui/themes';
+import { TrashIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { useItems, useToggleItem, useDeleteItem } from '../../hooks/useItems';
 import { BringItemForm } from './BringItemForm';
-import { useItems, useCreateItem, useToggleItem, useDeleteItem } from '../../hooks/useItems';
-import { useEventMembers } from '../../hooks/useInvitations';
-import type { BringItemFormValues } from '../../types';
-import styles from './BringItemList.module.css';
+import type { BringItem } from '../../types';
 
 interface BringItemListProps {
   eventId: string;
 }
 
+interface ItemRowProps {
+  item: BringItem;
+  onToggle: () => void;
+  onDelete: () => void;
+}
+
+function ItemRow({ item, onToggle, onDelete }: ItemRowProps) {
+  const fulfilled = !!item.fulfilledAt;
+  return (
+    <Flex align="center" gap="3" py="2">
+      <Checkbox
+        checked={fulfilled}
+        onCheckedChange={onToggle}
+        aria-label={fulfilled ? 'Mark needed' : 'Mark brought'}
+      />
+      <Text
+        size="2"
+        style={{
+          flex: 1,
+          textDecoration: fulfilled ? 'line-through' : 'none',
+          color: fulfilled ? 'var(--gray-9)' : undefined,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {item.name}
+      </Text>
+      {item.quantity && (
+        <Badge variant="surface" size="1" style={{ flexShrink: 0 }}>
+          {item.quantity}
+        </Badge>
+      )}
+      <IconButton
+        variant="ghost"
+        color="red"
+        size="1"
+        onClick={onDelete}
+        aria-label="Delete item"
+        style={{ flexShrink: 0 }}
+      >
+        <TrashIcon />
+      </IconButton>
+    </Flex>
+  );
+}
+
 export function BringItemList({ eventId }: BringItemListProps) {
-  const { data: items, isLoading, isError } = useItems(eventId);
-  const { data: members = [] } = useEventMembers(eventId);
-  const createItem = useCreateItem(eventId);
+  const { data: items, isLoading, isError, error } = useItems(eventId);
   const toggleItem = useToggleItem(eventId);
   const deleteItem = useDeleteItem(eventId);
-  const [showForm, setShowForm] = useState(false);
-
-  const handleCreate = async (data: BringItemFormValues) => {
-    await createItem.mutateAsync(data);
-    setShowForm(false);
-  };
 
   if (isLoading) {
     return (
-      <div className={styles.center}>
-        <ProgressSpinner style={{ width: '40px', height: '40px' }} strokeWidth="4" />
-      </div>
+      <Flex justify="center" py="6">
+        <Spinner size="3" />
+      </Flex>
     );
   }
 
   if (isError) {
-    return <Message severity="error" text="Failed to load items. Please try again." className="w-full" />;
+    return (
+      <Callout.Root color="red" variant="soft">
+        <Callout.Icon>
+          <ExclamationTriangleIcon />
+        </Callout.Icon>
+        <Callout.Text>
+          {error instanceof Error ? error.message : 'Failed to load bring items.'}
+        </Callout.Text>
+      </Callout.Root>
+    );
   }
 
-  const pending = (items ?? []).filter((i) => !i.fulfilledAt);
-  const fulfilled = (items ?? []).filter((i) => !!i.fulfilledAt);
+  const needed = (items ?? []).filter((i) => !i.fulfilledAt);
+  const brought = (items ?? []).filter((i) => !!i.fulfilledAt);
 
   return (
-    <div className={styles.container}>
-      {!showForm && (
-        <div className={styles.addRow}>
-          <Button
-            label="Add Item"
-            icon="pi pi-plus"
-            outlined
-            onClick={() => setShowForm(true)}
-            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+    <Box>
+      {/* Add form */}
+      <Box mb="4">
+        <BringItemForm eventId={eventId} />
+      </Box>
+
+      {/* Still needed section */}
+      <Text size="1" weight="bold" color="gray" as="p" mb="2">
+        STILL NEEDED ({needed.length})
+      </Text>
+
+      {needed.length === 0 && brought.length === 0 ? (
+        <Text size="2" color="gray" as="p" style={{ textAlign: 'center', padding: '16px 0' }}>
+          No items yet. Add one above.
+        </Text>
+      ) : needed.length === 0 ? (
+        <Text size="2" color="gray" as="p" style={{ padding: '4px 0' }}>
+          Everything has been brought!
+        </Text>
+      ) : (
+        needed.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            onToggle={() => toggleItem.mutate({ itemId: item.id, fulfilled: !!item.fulfilledAt })}
+            onDelete={() => deleteItem.mutate(item.id)}
           />
-        </div>
+        ))
       )}
 
-      {showForm && (
-        <BringItemForm
-          members={members}
-          onSubmit={handleCreate}
-          onCancel={() => setShowForm(false)}
-          isLoading={createItem.isPending}
-        />
-      )}
+      <Separator my="3" size="4" />
 
-      {(items ?? []).length === 0 && (
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon} aria-hidden="true">
-            <i className="pi pi-shopping-bag" />
-          </div>
-          <p>No items yet. Add what people should bring!</p>
-        </div>
-      )}
+      {/* Brought section */}
+      <Text size="1" weight="bold" color="gray" as="p" mb="2">
+        BROUGHT ({brought.length})
+      </Text>
 
-      {pending.length > 0 && (
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>
-            Still needed <span className={styles.count}>{pending.length}</span>
-          </h3>
-          <div className={styles.list} role="list">
-            {pending.map((item) => {
-              const assignee = members.find((m) => m.userId === item.assignedTo);
-              const assigneeName = assignee?.user?.name ?? assignee?.user?.email ?? null;
-              return (
-                <div key={item.id} className={styles.item} role="listitem">
-                  <div className={styles.itemLeft}>
-                    <Checkbox
-                      inputId={`item-${item.id}`}
-                      checked={false}
-                      onChange={() => toggleItem.mutate({ itemId: item.id, fulfilled: false })}
-                      disabled={toggleItem.isPending}
-                      aria-label={`Mark "${item.name}" as brought`}
-                    />
-                    <div className={styles.itemContent}>
-                      <label htmlFor={`item-${item.id}`} className={styles.itemName}>
-                        {item.name}
-                        {item.quantity && (
-                          <span className={styles.quantity}> · {item.quantity}</span>
-                        )}
-                      </label>
-                      {assigneeName && (
-                        <Tag
-                          value={`Bring: ${assigneeName}`}
-                          severity="info"
-                          className={styles.assignTag}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    icon="pi pi-trash"
-                    text
-                    severity="danger"
-                    size="small"
-                    onClick={() => deleteItem.mutate(item.id)}
-                    aria-label={`Delete item: ${item.name}`}
-                    className={styles.deleteBtn}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {brought.length === 0 ? (
+        <Text size="2" color="gray" as="p" style={{ padding: '4px 0' }}>
+          Nothing marked as brought yet.
+        </Text>
+      ) : (
+        brought.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            onToggle={() => toggleItem.mutate({ itemId: item.id, fulfilled: !!item.fulfilledAt })}
+            onDelete={() => deleteItem.mutate(item.id)}
+          />
+        ))
       )}
-
-      {fulfilled.length > 0 && (
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>
-            Brought <span className={styles.count}>{fulfilled.length}</span>
-          </h3>
-          <div className={styles.list} role="list">
-            {fulfilled.map((item) => {
-              const assignee = members.find((m) => m.userId === item.assignedTo);
-              const assigneeName = assignee?.user?.name ?? assignee?.user?.email ?? null;
-              return (
-                <div key={item.id} className={`${styles.item} ${styles.itemFulfilled}`} role="listitem">
-                  <div className={styles.itemLeft}>
-                    <Checkbox
-                      inputId={`item-fulfilled-${item.id}`}
-                      checked={true}
-                      onChange={() => toggleItem.mutate({ itemId: item.id, fulfilled: true })}
-                      disabled={toggleItem.isPending}
-                      aria-label={`Unmark "${item.name}" as brought`}
-                    />
-                    <div className={styles.itemContent}>
-                      <label
-                        htmlFor={`item-fulfilled-${item.id}`}
-                        className={`${styles.itemName} ${styles.itemNameDone}`}
-                      >
-                        {item.name}
-                        {item.quantity && (
-                          <span className={styles.quantity}> · {item.quantity}</span>
-                        )}
-                      </label>
-                      {assigneeName && (
-                        <Tag
-                          value={`Brought by: ${assigneeName}`}
-                          severity="success"
-                          className={styles.assignTag}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    icon="pi pi-trash"
-                    text
-                    severity="danger"
-                    size="small"
-                    onClick={() => deleteItem.mutate(item.id)}
-                    aria-label={`Delete item: ${item.name}`}
-                    className={styles.deleteBtn}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+    </Box>
   );
 }
