@@ -1,88 +1,51 @@
-import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Toast } from 'primereact/toast';
-import { Card } from 'primereact/card';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Message } from 'primereact/message';
-import { PageHeader } from '../components/layout/PageHeader';
-import { EventForm } from '../components/events/EventForm';
+import { Box } from '@radix-ui/themes';
 import { useEvent, useUpdateEvent } from '../hooks/useEvents';
+import { EventForm } from '../components/events/EventForm';
+import { PageHeader } from '../components/layout/PageHeader';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { toast } from '../components/ui/ToastProvider';
 import type { EventFormValues } from '../types';
-import styles from './EventEditPage.module.css';
 
 export function EventEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const toast = useRef<Toast>(null);
-
   const { data: event, isLoading, isError } = useEvent(id!);
-  const updateEvent = useUpdateEvent(id!);
+  const { mutateAsync, isPending } = useUpdateEvent(id!);
 
   const handleSubmit = async (data: EventFormValues) => {
     try {
-      await updateEvent.mutateAsync(data);
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Saved!',
-        detail: 'Event updated successfully.',
-        life: 3000,
-      });
+      await mutateAsync(data);
+      toast.success('Event updated!');
       navigate(`/events/${id}`);
     } catch {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to update event. Please try again.',
-        life: 4000,
-      });
+      toast.error('Failed to update event', 'Please try again.');
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={styles.center}>
-        <ProgressSpinner style={{ width: '48px', height: '48px' }} strokeWidth="4" />
-      </div>
-    );
-  }
-
-  if (isError || !event) {
-    return (
-      <div>
-        <PageHeader
-          title="Edit Event"
-          backTo={`/events/${id}`}
-          backLabel="Back to Event"
-        />
-        <Message severity="error" text="Event not found or failed to load." />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner />;
+  if (isError || !event) return <ErrorMessage message="Event not found." />;
 
   return (
-    <div className={styles.page}>
-      <Toast ref={toast} />
-
-      <PageHeader
-        title="Edit Event"
-        subtitle={event.name}
-        backTo={`/events/${id}`}
-        backLabel="Back to Event"
+    <Box style={{ maxWidth: 640 }}>
+      <PageHeader title="Edit Event" backTo={`/events/${id}`} backLabel="Back to Event" />
+      <EventForm
+        defaultValues={{
+          name: event.name,
+          description: event.description,
+          date: event.date,
+          endDate: event.endDate,
+          locationName: event.locationName,
+          locationStreet: event.locationStreet,
+          locationCity: event.locationCity,
+          locationZip: event.locationZip,
+          locationCountry: event.locationCountry,
+        }}
+        onSubmit={handleSubmit}
+        isLoading={isPending}
+        submitLabel="Save Changes"
       />
-
-      <Card className={styles.card}>
-        <EventForm
-          defaultValues={event}
-          onSubmit={handleSubmit}
-          submitLabel="Save Changes"
-          isLoading={updateEvent.isPending}
-          errorMessage={
-            updateEvent.isError
-              ? 'Failed to save changes. Please try again.'
-              : undefined
-          }
-        />
-      </Card>
-    </div>
+    </Box>
   );
 }

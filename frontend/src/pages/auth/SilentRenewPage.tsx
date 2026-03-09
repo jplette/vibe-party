@@ -1,19 +1,17 @@
 import { useEffect } from 'react';
-import { UserManager } from 'oidc-client-ts';
-import { oidcConfig } from '../../auth/oidc-config';
+import { useAuthContext } from '../../auth/AuthProvider';
 
 /**
- * Silent token renewal page.
- * Loaded in a hidden iframe by oidc-client-ts.
- * Must be extremely lightweight — no layout, no auth guard.
+ * Loaded in a hidden iframe by oidc-client-ts to silently renew the access
+ * token without a visible redirect. Renders nothing — just processes the
+ * silent callback and returns.
  */
 export function SilentRenewPage() {
+  const { userManager } = useAuthContext();
+
   useEffect(() => {
-    const userManager = new UserManager(oidcConfig);
-    userManager.signinSilentCallback().catch((err) => {
-      console.error('Silent renew error:', err);
-    });
-  }, []);
+    userManager.signinSilentCallback().catch(console.error);
+  }, [userManager]);
 
   return null;
 }

@@ -1,7 +1,6 @@
-
 import { useNavigate } from 'react-router-dom';
-import { Button } from 'primereact/button';
-import styles from './PageHeader.module.css';
+import { Flex, Heading, Text, IconButton, Box } from '@radix-ui/themes';
+import { ArrowLeftIcon } from '@radix-ui/react-icons';
 
 interface PageHeaderProps {
   title: string;
@@ -11,33 +10,35 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
 }
 
-export function PageHeader({
-  title,
-  subtitle,
-  backTo,
-  backLabel = 'Back',
-  actions,
-}: PageHeaderProps) {
+export function PageHeader({ title, subtitle, backTo, backLabel, actions }: PageHeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <div className={styles.header}>
-      <div className={styles.left}>
+    <Flex align="start" justify="between" mb="5" gap="4" wrap="wrap">
+      <Flex align="center" gap="3">
         {backTo && (
-          <Button
-            link
-            icon="pi pi-arrow-left"
-            label={backLabel}
-            className={styles.backBtn}
+          <IconButton
+            variant="ghost"
             onClick={() => navigate(backTo)}
-          />
+            aria-label={backLabel ?? 'Back'}
+          >
+            <ArrowLeftIcon />
+          </IconButton>
         )}
-        <div className={styles.titles}>
-          <h1 className={styles.title}>{title}</h1>
-          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
-        </div>
-      </div>
-      {actions && <div className={styles.actions}>{actions}</div>}
-    </div>
+        <Box>
+          <Heading size="6">{title}</Heading>
+          {subtitle && (
+            <Text size="2" color="gray" mt="1" as="p">
+              {subtitle}
+            </Text>
+          )}
+        </Box>
+      </Flex>
+      {actions && (
+        <Flex align="center" gap="2">
+          {actions}
+        </Flex>
+      )}
+    </Flex>
   );
 }

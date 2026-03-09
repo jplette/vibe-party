@@ -1,79 +1,87 @@
-
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from 'primereact/button';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Message } from 'primereact/message';
-import { PageHeader } from '../components/layout/PageHeader';
-import { EventCard } from '../components/events/EventCard';
+import { Box, Flex, Grid, TextField, Button } from '@radix-ui/themes';
+import { MagnifyingGlassIcon, PlusIcon } from '@radix-ui/react-icons';
 import { useEvents } from '../hooks/useEvents';
-import styles from './EventListPage.module.css';
+import { EventCard } from '../components/events/EventCard';
+import { PageHeader } from '../components/layout/PageHeader';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 export function EventListPage() {
   const navigate = useNavigate();
-  const { data: events, isLoading, isError, refetch } = useEvents();
+  const { data: events = [], isLoading, isError } = useEvents();
+  const [search, setSearch] = useState('');
+
+  if (isLoading) return <LoadingSpinner />;
+  if (isError) return <ErrorMessage message="Failed to load events." />;
+
+  const filtered = events.filter(
+    (e) =>
+      e.name.toLowerCase().includes(search.toLowerCase()) ||
+      (e.description ?? '').toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
-    <div>
+    <Box>
       <PageHeader
-        title="My Events"
-        subtitle="All events you're part of"
+        title="Events"
+        subtitle={`${events.length} event${events.length !== 1 ? 's' : ''}`}
         actions={
           <Button
-            label="Create Event"
-            icon="pi pi-plus"
+            style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
             onClick={() => navigate('/events/new')}
-            style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
-          />
+          >
+            <PlusIcon /> New Event
+          </Button>
         }
       />
 
-      {isLoading && (
-        <div className={styles.center}>
-          <ProgressSpinner style={{ width: '48px', height: '48px' }} strokeWidth="4" />
-        </div>
+      {events.length > 0 && (
+        <Flex mb="5">
+          <TextField.Root
+            placeholder="Search events..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ maxWidth: 360, width: '100%' }}
+          >
+            <TextField.Slot>
+              <MagnifyingGlassIcon />
+            </TextField.Slot>
+          </TextField.Root>
+        </Flex>
       )}
 
-      {isError && (
-        <div className={styles.center}>
-          <div className={styles.errorBlock}>
-            <Message
-              severity="error"
-              text="Couldn't load your events."
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon="🎉"
+          title={search ? 'No events match your search' : 'No events yet'}
+          description={
+            search ? 'Try a different search term.' : 'Create your first event to get started.'
+          }
+          action={
+            !search ? (
+              <Button
+                style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
+                onClick={() => navigate('/events/new')}
+              >
+                <PlusIcon /> Create Event
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <Grid columns={{ initial: '1', sm: '2', lg: '3' }} gap="4">
+          {filtered.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onClick={() => navigate(`/events/${event.id}`)}
             />
-            <Button
-              label="Retry"
-              icon="pi pi-refresh"
-              outlined
-              onClick={() => refetch()}
-              style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {!isLoading && !isError && (events ?? []).length === 0 && (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon} aria-hidden="true">
-            <i className="pi pi-calendar-plus" />
-          </div>
-          <h2>No events yet</h2>
-          <p>Create your first event and invite friends to join!</p>
-          <Button
-            label="Create Your First Event"
-            icon="pi pi-plus"
-            onClick={() => navigate('/events/new')}
-            style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
-          />
-        </div>
-      )}
-
-      {!isLoading && !isError && (events ?? []).length > 0 && (
-        <div className={styles.grid}>
-          {(events ?? []).map((event) => (
-            <EventCard key={event.id} event={event} />
           ))}
-        </div>
+        </Grid>
       )}
-    </div>
+    </Box>
   );
 }

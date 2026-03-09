@@ -1,89 +1,103 @@
-import { useEffect, useRef, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Button } from 'primereact/button';
+import { useEffect, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Flex, Callout, Spinner, Button, Heading, Text, Box } from '@radix-ui/themes';
+import { CheckCircledIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { invitationsApi } from '../api/invitations';
-import styles from './InvitationResponsePage.module.css';
 
-type Status = 'loading' | 'success' | 'error' | 'missing-token';
+type PageState = 'loading' | 'success' | 'error';
 
 export function InvitationDeclinePage() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const token = searchParams.get('token');
-  const [status, setStatus] = useState<Status>(token ? 'loading' : 'missing-token');
-  const [message, setMessage] = useState('');
-  const called = useRef(false);
+  const [params] = useSearchParams();
+  const token = params.get('token') ?? '';
+
+  const [state, setState] = useState<PageState>('loading');
+  const [errMsg, setErrMsg] = useState('');
 
   useEffect(() => {
-    if (!token || called.current) return;
-    called.current = true;
+    if (!token) {
+      setState('error');
+      setErrMsg('Invalid invitation link — no token was found.');
+      return;
+    }
 
     invitationsApi
       .decline(token)
-      .then((res) => {
-        setMessage(res.message ?? 'Invitation declined.');
-        setStatus('success');
+      .then(() => {
+        setState('success');
       })
       .catch(() => {
-        setMessage('This invitation link is invalid or has already been used.');
-        setStatus('error');
+        setState('error');
+        setErrMsg('This invitation has expired or has already been used.');
       });
   }, [token]);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.logoRow}>
-          <i className={`pi pi-star-fill ${styles.logoIcon}`} aria-hidden="true" />
-          <span className={styles.logoText}>Vibe<span className={styles.logoAccent}>Party</span></span>
-        </div>
-
-        {status === 'loading' && (
-          <>
-            <ProgressSpinner style={{ width: '48px', height: '48px' }} strokeWidth="4" />
-            <p className={styles.bodyText}>Processing your response…</p>
-          </>
+    <Flex align="center" justify="center" style={{ minHeight: '100vh', padding: '1.5rem' }}>
+      <Box style={{ maxWidth: 440, width: '100%' }}>
+        {state === 'loading' && (
+          <Flex direction="column" align="center" gap="4">
+            <Spinner size="3" />
+            <Text size="2" color="gray">
+              Processing your response…
+            </Text>
+          </Flex>
         )}
 
-        {status === 'success' && (
-          <>
-            <div className={styles.infoIcon} aria-hidden="true">
-              <i className="pi pi-info-circle" />
-            </div>
-            <h1 className={styles.heading}>Invitation Declined</h1>
-            <p className={styles.bodyText}>{message}</p>
+        {state === 'success' && (
+          <Flex direction="column" gap="4">
+            <Heading
+              size="6"
+              style={{
+                fontFamily: "'Lato', system-ui, sans-serif",
+                fontWeight: 800,
+                color: '#1a1a2e',
+              }}
+            >
+              Invitation declined
+            </Heading>
+            <Callout.Root color="blue">
+              <Callout.Icon>
+                <CheckCircledIcon />
+              </Callout.Icon>
+              <Callout.Text>
+                You&apos;ve declined the invitation. No worries — maybe next time!
+              </Callout.Text>
+            </Callout.Root>
             <Button
-              label="Back to Home"
-              icon="pi pi-home"
-              outlined
-              onClick={() => navigate('/dashboard')}
-              style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-            />
-          </>
+              asChild
+              size="3"
+              style={{
+                backgroundColor: '#004e89',
+                color: '#fff',
+                fontWeight: 700,
+                cursor: 'pointer',
+                alignSelf: 'flex-start',
+              }}
+            >
+              <Link to="/">Go Home</Link>
+            </Button>
+          </Flex>
         )}
 
-        {(status === 'error' || status === 'missing-token') && (
-          <>
-            <div className={styles.errorIcon} aria-hidden="true">
-              <i className="pi pi-times-circle" />
-            </div>
-            <h1 className={styles.heading}>Link Invalid</h1>
-            <p className={styles.bodyText}>
-              {status === 'missing-token'
-                ? 'No invitation token provided.'
-                : message}
-            </p>
+        {state === 'error' && (
+          <Flex direction="column" gap="4">
+            <Callout.Root color="red">
+              <Callout.Icon>
+                <ExclamationTriangleIcon />
+              </Callout.Icon>
+              <Callout.Text>{errMsg}</Callout.Text>
+            </Callout.Root>
             <Button
-              label="Go to Home"
-              icon="pi pi-home"
-              outlined
-              onClick={() => navigate('/dashboard')}
-              style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-            />
-          </>
+              asChild
+              variant="outline"
+              size="2"
+              style={{ cursor: 'pointer', alignSelf: 'flex-start' }}
+            >
+              <Link to="/">Go Home</Link>
+            </Button>
+          </Flex>
         )}
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

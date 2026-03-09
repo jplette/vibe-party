@@ -1,62 +1,54 @@
-
-import { Checkbox } from 'primereact/checkbox';
-import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
-import type { Todo, EventMember } from '../../types';
-import styles from './TodoItem.module.css';
+import { Flex, Text, Checkbox, Badge, IconButton } from '@radix-ui/themes';
+import { TrashIcon } from '@radix-ui/react-icons';
+import type { Todo } from '../../types';
 
 interface TodoItemProps {
   todo: Todo;
-  members: EventMember[];
-  onToggle: (todoId: string, completed: boolean) => void;
-  onDelete: (todoId: string) => void;
-  isToggling?: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+  currentUserId?: string | null;
 }
 
-export function TodoItem({ todo, members, onToggle, onDelete, isToggling }: TodoItemProps) {
-  const isCompleted = !!todo.completedAt;
-
-  const assignee = members.find((m) => m.userId === todo.assignedTo);
-  const assigneeName = assignee?.user?.name ?? assignee?.user?.email ?? (todo.assignedTo ? 'Unknown' : null);
+export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+  const done = !!todo.completedAt;
 
   return (
-    <div className={`${styles.item} ${isCompleted ? styles.completed : ''}`} role="listitem">
-      <div className={styles.left}>
-        <Checkbox
-          inputId={`todo-${todo.id}`}
-          checked={isCompleted}
-          onChange={() => onToggle(todo.id, isCompleted)}
-          disabled={isToggling}
-          aria-label={`Mark "${todo.title}" as ${isCompleted ? 'incomplete' : 'complete'}`}
-        />
-        <div className={styles.content}>
-          <label
-            htmlFor={`todo-${todo.id}`}
-            className={`${styles.title} ${isCompleted ? styles.titleDone : ''}`}
-          >
-            {todo.title}
-          </label>
-          {todo.description && (
-            <p className={styles.description}>{todo.description}</p>
-          )}
-          {assigneeName && (
-            <Tag
-              value={`Assigned: ${assigneeName}`}
-              severity="info"
-              className={styles.assigneeTag}
-            />
-          )}
-        </div>
-      </div>
-      <Button
-        icon="pi pi-trash"
-        text
-        severity="danger"
-        size="small"
-        onClick={() => onDelete(todo.id)}
-        aria-label={`Delete todo: ${todo.title}`}
-        className={styles.deleteBtn}
+    <Flex align="center" gap="3" py="2">
+      <Checkbox
+        checked={done}
+        onCheckedChange={onToggle}
+        aria-label={done ? 'Mark incomplete' : 'Mark complete'}
       />
-    </div>
+      <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
+        <Text
+          size="2"
+          style={{
+            textDecoration: done ? 'line-through' : 'none',
+            color: done ? 'var(--gray-9)' : undefined,
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {todo.title}
+        </Text>
+        {todo.assignedTo && (
+          <Badge variant="outline" size="1" color="orange" style={{ flexShrink: 0 }}>
+            {todo.assignedTo}
+          </Badge>
+        )}
+      </Flex>
+      <IconButton
+        variant="ghost"
+        color="red"
+        size="1"
+        onClick={onDelete}
+        aria-label="Delete todo"
+        style={{ flexShrink: 0 }}
+      >
+        <TrashIcon />
+      </IconButton>
+    </Flex>
   );
 }

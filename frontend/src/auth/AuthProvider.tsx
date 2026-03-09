@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { UserManager, WebStorageStateStore, InMemoryWebStorage } from 'oidc-client-ts';
+import { Callout, Flex, Code, Text, Heading, Box } from '@radix-ui/themes';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { oidcConfig } from './oidc-config';
 import { useAuthStore } from '../stores/authStore';
 
@@ -15,53 +17,31 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // Guard: render a clear error when env vars are missing rather than crashing the
 // entire app tree. This happens during local development when .env is not set up.
-const isMissingEnvConfig = !import.meta.env.VITE_OIDC_AUTHORITY || !import.meta.env.VITE_OIDC_CLIENT_ID;
+const isMissingEnvConfig =
+  !import.meta.env.VITE_OIDC_AUTHORITY || !import.meta.env.VITE_OIDC_CLIENT_ID;
 
 function MissingEnvBanner() {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      gap: '1rem',
-      padding: '2rem',
-      fontFamily: 'system-ui, sans-serif',
-      background: '#f8f9fa',
-    }}>
-      <div style={{
-        background: '#fff',
-        border: '1px solid #e9ecef',
-        borderRadius: '12px',
-        padding: '2rem 2.5rem',
-        maxWidth: '520px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.07)',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚙️</div>
-        <h2 style={{ margin: '0 0 0.5rem', color: '#212529' }}>Missing environment config</h2>
-        <p style={{ margin: '0 0 1rem', color: '#6c757d', lineHeight: 1.6 }}>
-          The OIDC environment variables are not configured. Copy{' '}
-          <code style={{ background: '#f8f9fa', padding: '0.1em 0.35em', borderRadius: '4px' }}>.env.example</code>{' '}
-          to{' '}
-          <code style={{ background: '#f8f9fa', padding: '0.1em 0.35em', borderRadius: '4px' }}>.env</code>{' '}
-          and fill in your Keycloak settings before running the dev server.
-        </p>
-        <pre style={{
-          background: '#f8f9fa',
-          border: '1px solid #e9ecef',
-          borderRadius: '6px',
-          padding: '0.75rem 1rem',
-          fontSize: '0.8rem',
-          textAlign: 'left',
-          color: '#495057',
-          margin: 0,
-        }}>
-          {`cp frontend/.env.example frontend/.env`}
-        </pre>
-      </div>
-    </div>
+    <Flex align="center" justify="center" style={{ minHeight: '100vh', padding: '2rem' }}>
+      <Box style={{ maxWidth: '520px', width: '100%' }}>
+        <Heading size="4" mb="3">
+          Missing environment config
+        </Heading>
+        <Callout.Root color="amber" variant="surface" mb="4">
+          <Callout.Icon>
+            <InfoCircledIcon />
+          </Callout.Icon>
+          <Callout.Text>
+            The OIDC environment variables are not configured. Copy{' '}
+            <Code variant="ghost">.env.example</Code> to <Code variant="ghost">.env</Code> and fill
+            in your Keycloak settings before running the dev server.
+          </Callout.Text>
+        </Callout.Root>
+        <Text as="p" size="2" color="gray">
+          Run: <Code variant="soft">cp frontend-radix/.env.example frontend-radix/.env</Code>
+        </Text>
+      </Box>
+    </Flex>
   );
 }
 

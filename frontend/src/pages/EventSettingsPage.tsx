@@ -1,202 +1,121 @@
-import { useRef } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Toast } from 'primereact/toast';
-import { Card } from 'primereact/card';
-import { Button } from 'primereact/button';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Message } from 'primereact/message';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { PageHeader } from '../components/layout/PageHeader';
-import { InviteForm } from '../components/invitations/InviteForm';
+import { Box, Flex, Table, Button, Heading, Text } from '@radix-ui/themes';
+import { TrashIcon } from '@radix-ui/react-icons';
 import { useEvent } from '../hooks/useEvents';
-import {
-  useInvitations,
-  useSendInvitation,
-  useCancelInvitation,
-} from '../hooks/useInvitations';
-import type { Invitation, InvitationFormValues } from '../types';
+import { useInvitations, useCancelInvitation } from '../hooks/useInvitations';
+import { PageHeader } from '../components/layout/PageHeader';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { toast } from '../components/ui/ToastProvider';
 import { formatDate } from '../utils/formatDate';
-import styles from './EventSettingsPage.module.css';
 
 export function EventSettingsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const toast = useRef<Toast>(null);
-
   const { data: event, isLoading: eventLoading } = useEvent(id!);
-  const { data: invitations, isLoading: invLoading, isError: invError } = useInvitations(id!);
-  const sendInvitation = useSendInvitation(id!);
+  const { data: invitations = [], isLoading: invLoading } = useInvitations(id!);
   const cancelInvitation = useCancelInvitation(id!);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const handleSendInvite = async (data: InvitationFormValues) => {
+  const handleCancel = async () => {
+    if (!confirmId) return;
     try {
-      await sendInvitation.mutateAsync(data);
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Invited!',
-        detail: `Invitation sent to ${data.email}`,
-        life: 3000,
-      });
+      await cancelInvitation.mutateAsync(confirmId);
+      toast.success('Invitation cancelled');
+      setConfirmId(null);
     } catch {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to send invitation. They may already be invited.',
-        life: 4000,
-      });
+      toast.error('Failed to cancel invitation');
     }
   };
 
-  const handleCancelInvite = (invitation: Invitation) => {
-    confirmDialog({
-      message: `Cancel invitation for ${invitation.email}?`,
-      header: 'Cancel Invitation',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      accept: async () => {
-        try {
-          await cancelInvitation.mutateAsync(invitation.id);
-          toast.current?.show({
-            severity: 'info',
-            summary: 'Cancelled',
-            detail: `Invitation to ${invitation.email} cancelled.`,
-            life: 3000,
-          });
-        } catch {
-          toast.current?.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to cancel invitation.',
-            life: 4000,
-          });
-        }
-      },
-    });
-  };
-
-  const statusBodyTemplate = (inv: Invitation) => {
-    const severityMap: Record<Invitation['status'], 'warning' | 'success' | 'danger'> = {
-      pending: 'warning',
-      accepted: 'success',
-      declined: 'danger',
-    };
-    return <Tag value={inv.status} severity={severityMap[inv.status]} />;
-  };
-
-  const actionsBodyTemplate = (inv: Invitation) => {
-    if (inv.status !== 'pending') return null;
-    return (
-      <Button
-        icon="pi pi-times"
-        text
-        severity="danger"
-        size="small"
-        onClick={() => handleCancelInvite(inv)}
-        aria-label={`Cancel invitation for ${inv.email}`}
-        loading={cancelInvitation.isPending}
-      />
-    );
-  };
-
-  if (eventLoading) {
-    return (
-      <div className={styles.center}>
-        <ProgressSpinner style={{ width: '48px', height: '48px' }} strokeWidth="4" />
-      </div>
-    );
-  }
+  if (eventLoading || invLoading) return <LoadingSpinner />;
+  if (!event) return <ErrorMessage message="Event not found." />;
 
   return (
-    <div className={styles.page}>
-      <Toast ref={toast} />
-      <ConfirmDialog />
-
+    <Box>
       <PageHeader
         title="Event Settings"
-        subtitle={event?.name ?? 'Manage invitations'}
+        subtitle={event.name}
         backTo={`/events/${id}`}
         backLabel="Back to Event"
-        actions={
-          <Button
-            label="View Event"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            outlined
-            size="small"
-            onClick={() => navigate(`/events/${id}`)}
-            style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
-          />
-        }
       />
 
-      {/* Send invitation */}
-      <Card className={styles.card}>
-        <h2 className={styles.cardTitle}>
-          <i className="pi pi-send" aria-hidden="true" />
-          Send Invitation
-        </h2>
-        <p className={styles.cardSubtitle}>
-          Invite someone to join this event. They'll receive an email with an accept/decline link.
-        </p>
-        <InviteForm onSubmit={handleSendInvite} isLoading={sendInvitation.isPending} />
-      </Card>
+      <ConfirmModal
+        open={!!confirmId}
+        onOpenChange={(open) => {
+          if (!open) setConfirmId(null);
+        }}
+        title="Cancel Invitation"
+        description="Are you sure you want to cancel this invitation?"
+        confirmLabel="Cancel Invitation"
+        onConfirm={handleCancel}
+        isLoading={cancelInvitation.isPending}
+      />
 
-      {/* Invitation list */}
-      <Card className={styles.card}>
-        <h2 className={styles.cardTitle}>
-          <i className="pi pi-envelope" aria-hidden="true" />
+      <Box style={{ maxWidth: 700 }}>
+        <Heading size="4" mb="4">
           Invitations
-        </h2>
+        </Heading>
 
-        {invLoading && (
-          <div className={styles.center}>
-            <ProgressSpinner style={{ width: '36px', height: '36px' }} strokeWidth="4" />
-          </div>
+        {invitations.length === 0 ? (
+          <Text color="gray" size="2">
+            No invitations sent yet. Go to the event page to invite guests.
+          </Text>
+        ) : (
+          <Table.Root variant="surface">
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Sent</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell />
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {invitations.map((inv) => (
+                <Table.Row key={inv.id}>
+                  <Table.Cell>{inv.email}</Table.Cell>
+                  <Table.Cell>
+                    <StatusBadge status={inv.status} />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="1" color="gray">
+                      {formatDate(inv.createdAt)}
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {inv.status === 'pending' && (
+                      <Button
+                        variant="ghost"
+                        color="red"
+                        size="1"
+                        onClick={() => setConfirmId(inv.id)}
+                        aria-label="Cancel invitation"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <TrashIcon />
+                      </Button>
+                    )}
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
         )}
 
-        {invError && (
-          <Message severity="error" text="Failed to load invitations." />
-        )}
-
-        {!invLoading && !invError && (invitations ?? []).length === 0 && (
-          <div className={styles.emptyInvitations}>
-            <div className={styles.emptyInvitationsIcon} aria-hidden="true">
-              <i className="pi pi-envelope" />
-            </div>
-            <p>No invitations sent yet.</p>
-          </div>
-        )}
-
-        {!invLoading && !invError && (invitations ?? []).length > 0 && (
-          <DataTable
-            value={invitations}
-            className={styles.table}
-            stripedRows
-            size="small"
+        <Flex mt="5">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/events/${id}`)}
+            style={{ cursor: 'pointer' }}
           >
-            <Column field="email" header="Email" className={styles.emailCol} />
-            <Column
-              field="status"
-              header="Status"
-              body={statusBodyTemplate}
-              style={{ width: '120px' }}
-            />
-            <Column
-              field="createdAt"
-              header="Sent"
-              body={(inv: Invitation) => formatDate(inv.createdAt)}
-              style={{ width: '120px' }}
-            />
-            <Column
-              body={actionsBodyTemplate}
-              style={{ width: '80px', textAlign: 'right' }}
-            />
-          </DataTable>
-        )}
-      </Card>
-    </div>
+            Back to Event
+          </Button>
+        </Flex>
+      </Box>
+    </Box>
   );
 }

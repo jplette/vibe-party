@@ -1,41 +1,48 @@
 import { StrictMode } from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PrimeReactProvider } from 'primereact/api';
-
-// PrimeReact styles — must be imported before app styles
-import 'primereact/resources/themes/lara-light-amber/theme.css';
-import 'primereact/resources/primereact.min.css';
-import 'primeicons/primeicons.css';
-import 'primeflex/primeflex.css';
-
-// App styles — override PrimeReact theme tokens
+import { Theme } from '@radix-ui/themes';
+import '@radix-ui/themes/styles.css';
+import './styles/fonts.css';
+import './styles/theme.css';
 import './styles/global.css';
+import { AuthProvider } from './auth/AuthProvider';
+import { ToastProvider } from './components/ui/ToastProvider';
+import { App } from './App';
+import { useThemeStore } from './stores/themeStore';
 
-import App from './App';
+// ─── Themed wrapper reads mode from persisted Zustand store ───────────────────
 
-// Configure TanStack Query
+function ThemedApp() {
+  const { mode } = useThemeStore();
+  return (
+    <Theme appearance={mode} accentColor="orange" grayColor="slate" radius="medium">
+      <App />
+      {/* Toast overlay — sits inside Theme so it inherits CSS variables */}
+      <ToastProvider />
+    </Theme>
+  );
+}
+
+// ─── TanStack Query client ────────────────────────────────────────────────────
+
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30_000,
-      gcTime: 5 * 60 * 1000,
-    },
-    mutations: {
-      retry: 0,
-    },
+    queries: { staleTime: 30_000, retry: 1 },
+    mutations: { retry: 0 },
   },
 });
 
+// ─── Mount ────────────────────────────────────────────────────────────────────
+
 const root = document.getElementById('root')!;
 
-ReactDOM.createRoot(root).render(
+createRoot(root).render(
   <StrictMode>
-    <PrimeReactProvider value={{ ripple: true }}>
+    <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <ThemedApp />
       </QueryClientProvider>
-    </PrimeReactProvider>
-  </StrictMode>
+    </AuthProvider>
+  </StrictMode>,
 );

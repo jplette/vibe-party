@@ -22,13 +22,6 @@ frontend/.vite/
 frontend/coverage/
 frontend/e2e-report/
 
-# --- Frontend Radix ---
-frontend-radix/node_modules/
-frontend-radix/dist/
-frontend-radix/.vite/
-frontend-radix/coverage/
-frontend-radix/e2e-report/
-
 # --- Docker ---
 postgres_data/
 redis_data/
