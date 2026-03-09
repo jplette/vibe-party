@@ -34,18 +34,40 @@ interface SidebarProps {
   name: string | null;
   email: string | null;
   initials: string;
+  mode: 'light' | 'dark';
   onLogout: () => void;
   onClose?: () => void;
   showCloseButton?: boolean;
 }
 
-function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: SidebarProps) {
+function Sidebar({ name, email, initials, mode, onLogout, onClose, showCloseButton }: SidebarProps) {
+  const isDark = mode === 'dark';
+
+  // Color tokens derived from mode
+  const bg = isDark ? '#1a1a1a' : '#ffffff';
+  const separatorColor = isDark ? 'rgba(255,255,255,0.1)' : 'var(--gray-4)';
+  const logoTextColor = isDark ? '#ffffff' : '#212529';
+  const closeButtonColor = isDark ? 'rgba(255,255,255,0.6)' : 'var(--gray-10)';
+
+  // Nav item colors
+  const navIconColor = isDark ? 'rgba(255,255,255,0.7)' : '#6c757d';
+  const navTextColor = isDark ? 'rgba(255,255,255,0.75)' : '#495057';
+  const navActiveBg = isDark ? 'rgba(255,107,53,0.18)' : '#fff3ed';
+  const navActiveIconColor = '#ff6b35';
+  const navActiveTextColor = '#ff6b35';
+  const navHoverBg = isDark ? 'rgba(255,255,255,0.06)' : 'var(--gray-2)';
+
+  // User section colors
+  const userNameColor = isDark ? '#ffffff' : '#212529';
+  const userEmailColor = isDark ? 'rgba(255,255,255,0.5)' : '#6c757d';
+
   return (
     <Box
       style={{
         width: 220,
         minHeight: '100vh',
-        backgroundColor: '#004e89',
+        backgroundColor: bg,
+        borderRight: `1px solid ${separatorColor}`,
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
@@ -76,12 +98,12 @@ function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: 
             weight="bold"
             size="4"
             style={{
-              color: '#fff',
+              color: logoTextColor,
               letterSpacing: '-0.02em',
               fontFamily: "'Lato', system-ui, sans-serif",
             }}
           >
-            Vibe <span style={{ color: '#f7c59f' }}>Party</span>
+            Vibe <span style={{ color: '#ff6b35' }}>Party</span>
           </Text>
         </Flex>
 
@@ -92,14 +114,14 @@ function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: 
             size="2"
             onClick={onClose}
             aria-label="Close sidebar"
-            style={{ color: 'rgba(255,255,255,0.7)' }}
+            style={{ color: closeButtonColor }}
           >
             <Cross1Icon />
           </IconButton>
         )}
       </Flex>
 
-      <Separator style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+      <Separator style={{ backgroundColor: separatorColor }} />
 
       {/* Nav links */}
       <Flex direction="column" gap="1" p="3" style={{ flex: 1 }}>
@@ -113,25 +135,30 @@ function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: 
                 py="2"
                 style={{
                   borderRadius: 'var(--radius-3)',
-                  backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  backgroundColor: isActive ? navActiveBg : 'transparent',
                   cursor: 'pointer',
                   transition: 'background-color 0.15s',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive)
-                    (e.currentTarget as HTMLElement).style.backgroundColor =
-                      'rgba(255,255,255,0.08)';
+                    (e.currentTarget as HTMLElement).style.backgroundColor = navHoverBg;
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive)
                     (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
                 }}
               >
-                <Icon style={{ color: 'rgba(255,255,255,0.8)', width: 16, height: 16 }} />
+                <Icon
+                  style={{
+                    color: isActive ? navActiveIconColor : navIconColor,
+                    width: 16,
+                    height: 16,
+                  }}
+                />
                 <Text
                   size="2"
                   style={{
-                    color: isActive ? '#fff' : 'rgba(255,255,255,0.8)',
+                    color: isActive ? navActiveTextColor : navTextColor,
                     fontWeight: isActive ? 600 : 400,
                   }}
                 >
@@ -145,7 +172,7 @@ function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: 
 
       {/* User section */}
       <Box p="3">
-        <Separator mb="3" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+        <Separator mb="3" style={{ backgroundColor: separatorColor }} />
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
             <Flex
@@ -164,7 +191,7 @@ function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: 
                   size="1"
                   weight="bold"
                   style={{
-                    color: '#fff',
+                    color: userNameColor,
                     display: 'block',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -177,7 +204,7 @@ function Sidebar({ name, email, initials, onLogout, onClose, showCloseButton }: 
                   <Text
                     size="1"
                     style={{
-                      color: 'rgba(255,255,255,0.6)',
+                      color: userEmailColor,
                       display: 'block',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -249,6 +276,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     name,
     email,
     initials,
+    mode,
     onLogout: handleLogout,
   };
 

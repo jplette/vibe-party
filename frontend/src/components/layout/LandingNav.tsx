@@ -13,7 +13,7 @@ export function LandingNav() {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        backgroundColor: '#004e89',
+        backgroundColor: mode === 'dark' ? '#141414' : '#004e89',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
         backdropFilter: 'blur(12px)',
       }}
