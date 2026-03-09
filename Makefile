@@ -67,11 +67,10 @@ seed:
 psql:
 	docker compose exec postgres psql -U vibe -d vibe_party
 
-# Sync font files and CSS variables from frontend/ into keycloak-theme/
+# Sync Lato font files from frontend/ into keycloak-theme/ (both public/ for dev server and src/ for Vite asset bundling)
 sync-theme-assets:
 	cp -r frontend/public/fonts/lato keycloak-theme/public/fonts/
-	cp frontend/src/styles/theme.css keycloak-theme/src/styles/_variables.css
-	cp frontend/src/styles/fonts.css keycloak-theme/src/styles/_fonts.css
+	cp frontend/public/fonts/lato/*.woff2 keycloak-theme/src/styles/fonts/
 
 # Build the Keycloak theme JAR (outputs to keycloak-theme/dist_keycloak/)
 build-theme:

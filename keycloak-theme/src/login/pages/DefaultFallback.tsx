@@ -1,6 +1,7 @@
 import type { KcContext } from "keycloakify/login/KcContext";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
+import { Code, Flex, Text } from "@radix-ui/themes";
 
 interface Props {
     kcContext: KcContext;
@@ -14,15 +15,15 @@ export default function DefaultFallback({ kcContext }: Props) {
     return (
         <AuthCard>
             <Logo />
-            <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
-                    Page: <code style={{ fontFamily: "monospace", background: "#f0f0f0", padding: "0.125rem 0.375rem", borderRadius: "3px" }}>{kcContext.pageId}</code>
-                </p>
-                <p style={{ fontSize: "0.8125rem", color: "var(--color-text-subtle)" }}>
+            <Flex direction="column" align="center" gap="2">
+                <Text size="2" color="gray">
+                    Page: <Code variant="soft">{kcContext.pageId}</Code>
+                </Text>
+                <Text size="1" color="gray">
                     This page has not been custom-styled yet. Add it to{" "}
-                    <code style={{ fontFamily: "monospace" }}>src/login/KcPage.tsx</code>.
-                </p>
-            </div>
+                    <Code variant="ghost">src/login/KcPage.tsx</Code>.
+                </Text>
+            </Flex>
         </AuthCard>
     );
 }

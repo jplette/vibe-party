@@ -2,7 +2,8 @@ import type { KcContext } from "keycloakify/login/KcContext";
 import { useI18n } from "../i18n";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
-import { Button } from "primereact/button";
+import { Button, Callout, Flex, Text } from "@radix-ui/themes";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
 type ErrorKcContext = Extract<KcContext, { pageId: "error.ftl" }>;
 
@@ -16,34 +17,43 @@ export default function Error({ kcContext }: Props) {
     return (
         <AuthCard>
             <Logo />
-            <div style={{ textAlign: "center" }}>
+            <Flex direction="column" align="center" gap="3">
+                {/* Warning icon bubble */}
                 <div style={{
                     width: "3.5rem",
                     height: "3.5rem",
                     borderRadius: "50%",
-                    background: "#fff5f5",
+                    background: "var(--red-3, #fff5f5)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    margin: "0 auto 1.25rem",
-                    fontSize: "1.5rem"
                 }}>
-                    <i className="pi pi-exclamation-triangle" style={{ color: "var(--color-danger)", fontSize: "1.25rem" }} />
+                    <ExclamationTriangleIcon
+                        width="22"
+                        height="22"
+                        style={{ color: "var(--red-9, #e5484d)" }}
+                    />
                 </div>
-                <h2 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--color-danger, #dc3545)", marginTop: 0, marginBottom: "0.75rem" }}>
+
+                <Text size="4" weight="bold" align="center" style={{ color: "var(--red-9, #e5484d)" }}>
                     {i18n.msgStr("errorTitle")}
-                </h2>
-                <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "1.5rem" }}>
-                    {kcContext.message.summary}
-                </p>
+                </Text>
+
+                <Callout.Root color="red" role="alert" style={{ width: "100%" }}>
+                    <Callout.Text>{kcContext.message.summary}</Callout.Text>
+                </Callout.Root>
+
                 {kcContext.client?.baseUrl && (
                     <Button
-                        label="Back to application"
-                        onClick={() => { window.location.href = kcContext.client!.baseUrl!; }}
+                        type="button"
+                        size="3"
                         style={{ width: "100%" }}
-                    />
+                        onClick={() => { window.location.href = kcContext.client!.baseUrl!; }}
+                    >
+                        Back to application
+                    </Button>
                 )}
-            </div>
+            </Flex>
         </AuthCard>
     );
 }

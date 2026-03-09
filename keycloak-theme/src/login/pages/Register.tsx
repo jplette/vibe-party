@@ -3,8 +3,15 @@ import type { KcContext } from "keycloakify/login/KcContext";
 import { useI18n } from "../i18n";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
-import { InputText } from "primereact/inputtext";
-import { Button } from "primereact/button";
+import {
+    Button,
+    Callout,
+    Flex,
+    Grid,
+    Text,
+    TextField,
+} from "@radix-ui/themes";
+import { EyeClosedIcon, EyeOpenIcon } from "@radix-ui/react-icons";
 
 type RegisterKcContext = Extract<KcContext, { pageId: "register.ftl" }>;
 
@@ -19,155 +26,215 @@ export default function Register({ kcContext }: Props) {
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
-    const labelStyle: React.CSSProperties = {
-        display: "block",
-        marginBottom: "0.375rem",
-        fontWeight: 600,
-        fontSize: "0.875rem",
-        color: "var(--color-text)"
+    const fieldError = (field: string): string | null => {
+        if (!kcContext.messagesPerField?.existsError(field)) return null;
+        return kcContext.messagesPerField.getFirstError(field) ?? null;
     };
 
-    const fieldError = (field: string) => {
-        const exists = kcContext.messagesPerField?.existsError(field);
-        if (!exists) return null;
-        return (
-            <small style={{ color: "var(--color-danger)", fontSize: "0.8125rem", marginTop: "0.25rem", display: "block" }}>
-                {kcContext.messagesPerField?.getFirstError(field)}
-            </small>
-        );
-    };
+    const fieldColor = (field: string): "red" | undefined =>
+        kcContext.messagesPerField?.existsError(field) ? "red" : undefined;
 
     return (
         <AuthCard>
             <Logo />
-            <h2 style={{ textAlign: "center", fontSize: "1.125rem", fontWeight: 700, color: "var(--color-nav)", marginTop: 0, marginBottom: "1.5rem" }}>
+            <Text as="p" size="4" weight="bold" align="center" mb="4"
+                style={{ margin: "0 0 1.25rem", color: "var(--color-nav, #004e89)" }}>
                 Create your account
-            </h2>
+            </Text>
 
-            <form action={url.registrationAction} method="post" onSubmit={() => setIsSubmitDisabled(true)}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-                    <div>
-                        <label htmlFor="firstName" style={labelStyle}>
-                            {i18n.msgStr("firstName")}
+            <form
+                action={url.registrationAction}
+                method="post"
+                onSubmit={() => setIsSubmitDisabled(true)}
+            >
+                <Flex direction="column" gap="3">
+                    {/* First name + Last name */}
+                    <Grid columns="2" gap="3">
+                        <label>
+                            <Text as="div" size="2" weight="bold" mb="1">
+                                {i18n.msgStr("firstName")}
+                            </Text>
+                            <TextField.Root
+                                id="firstName"
+                                name="firstName"
+                                autoFocus
+                                size="2"
+                                color={fieldColor("firstName")}
+                            />
+                            {fieldError("firstName") && (
+                                <Text as="p" size="1" color="red" mt="1" style={{ margin: "0.25rem 0 0" }}>
+                                    {fieldError("firstName")}
+                                </Text>
+                            )}
                         </label>
-                        <InputText id="firstName" name="firstName" autoFocus style={{ width: "100%" }} />
-                        {fieldError("firstName")}
-                    </div>
-                    <div>
-                        <label htmlFor="lastName" style={labelStyle}>
-                            {i18n.msgStr("lastName")}
+                        <label>
+                            <Text as="div" size="2" weight="bold" mb="1">
+                                {i18n.msgStr("lastName")}
+                            </Text>
+                            <TextField.Root
+                                id="lastName"
+                                name="lastName"
+                                size="2"
+                                color={fieldColor("lastName")}
+                            />
+                            {fieldError("lastName") && (
+                                <Text as="p" size="1" color="red" mt="1" style={{ margin: "0.25rem 0 0" }}>
+                                    {fieldError("lastName")}
+                                </Text>
+                            )}
                         </label>
-                        <InputText id="lastName" name="lastName" style={{ width: "100%" }} />
-                        {fieldError("lastName")}
-                    </div>
-                </div>
+                    </Grid>
 
-                <div style={{ marginBottom: "1rem" }}>
-                    <label htmlFor="email" style={labelStyle}>
-                        {i18n.msgStr("email")}
+                    {/* Email */}
+                    <label>
+                        <Text as="div" size="2" weight="bold" mb="1">
+                            {i18n.msgStr("email")}
+                        </Text>
+                        <TextField.Root
+                            id="email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            size="2"
+                            color={fieldColor("email")}
+                        />
+                        {fieldError("email") && (
+                            <Text as="p" size="1" color="red" mt="1" style={{ margin: "0.25rem 0 0" }}>
+                                {fieldError("email")}
+                            </Text>
+                        )}
                     </label>
-                    <InputText id="email" name="email" type="email" autoComplete="email" style={{ width: "100%" }} />
-                    {fieldError("email")}
-                </div>
 
-                {!realm.registrationEmailAsUsername && (
-                    <div style={{ marginBottom: "1rem" }}>
-                        <label htmlFor="username" style={labelStyle}>
-                            {i18n.msgStr("username")}
+                    {/* Username (only when email is not used as username) */}
+                    {!realm.registrationEmailAsUsername && (
+                        <label>
+                            <Text as="div" size="2" weight="bold" mb="1">
+                                {i18n.msgStr("username")}
+                            </Text>
+                            <TextField.Root
+                                id="username"
+                                name="username"
+                                autoComplete="username"
+                                size="2"
+                                color={fieldColor("username")}
+                            />
+                            {fieldError("username") && (
+                                <Text as="p" size="1" color="red" mt="1" style={{ margin: "0.25rem 0 0" }}>
+                                    {fieldError("username")}
+                                </Text>
+                            )}
                         </label>
-                        <InputText id="username" name="username" autoComplete="username" style={{ width: "100%" }} />
-                        {fieldError("username")}
-                    </div>
-                )}
+                    )}
 
-                <div style={{ marginBottom: "1rem" }}>
-                    <label htmlFor="password" style={labelStyle}>
-                        {i18n.msgStr("password")}
-                    </label>
-                    <div style={{ position: "relative", width: "100%" }}>
-                        <InputText
+                    {/* Password */}
+                    <label>
+                        <Text as="div" size="2" weight="bold" mb="1">
+                            {i18n.msgStr("password")}
+                        </Text>
+                        <TextField.Root
                             id="password"
                             name="password"
                             type={showPassword ? "text" : "password"}
                             autoComplete="new-password"
-                            style={{ width: "100%", paddingRight: "2.75rem" }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(prev => !prev)}
-                            style={{
-                                position: "absolute",
-                                right: "0.625rem",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: "0.25rem",
-                                color: "var(--color-text-muted)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            size="2"
+                            color={fieldColor("password")}
                         >
-                            <i className={showPassword ? "pi pi-eye-slash" : "pi pi-eye"} style={{ fontSize: "1rem" }} />
-                        </button>
-                    </div>
-                    {fieldError("password")}
-                </div>
-
-                <div style={{ marginBottom: "1.5rem" }}>
-                    <label htmlFor="password-confirm" style={labelStyle}>
-                        {i18n.msgStr("passwordConfirm")}
+                            <TextField.Slot side="right">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(prev => !prev)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        padding: "0 2px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        color: "var(--gray-9)",
+                                    }}
+                                >
+                                    {showPassword
+                                        ? <EyeClosedIcon width="16" height="16" />
+                                        : <EyeOpenIcon width="16" height="16" />
+                                    }
+                                </button>
+                            </TextField.Slot>
+                        </TextField.Root>
+                        {fieldError("password") && (
+                            <Text as="p" size="1" color="red" mt="1" style={{ margin: "0.25rem 0 0" }}>
+                                {fieldError("password")}
+                            </Text>
+                        )}
                     </label>
-                    <div style={{ position: "relative", width: "100%" }}>
-                        <InputText
+
+                    {/* Password confirm */}
+                    <label>
+                        <Text as="div" size="2" weight="bold" mb="1">
+                            {i18n.msgStr("passwordConfirm")}
+                        </Text>
+                        <TextField.Root
                             id="password-confirm"
                             name="password-confirm"
                             type={showPasswordConfirm ? "text" : "password"}
                             autoComplete="new-password"
-                            style={{ width: "100%", paddingRight: "2.75rem" }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPasswordConfirm(prev => !prev)}
-                            style={{
-                                position: "absolute",
-                                right: "0.625rem",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: "0.25rem",
-                                color: "var(--color-text-muted)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                            aria-label={showPasswordConfirm ? "Hide password" : "Show password"}
+                            size="2"
+                            color={fieldColor("password-confirm")}
                         >
-                            <i className={showPasswordConfirm ? "pi pi-eye-slash" : "pi pi-eye"} style={{ fontSize: "1rem" }} />
-                        </button>
-                    </div>
-                    {fieldError("password-confirm")}
-                </div>
+                            <TextField.Slot side="right">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswordConfirm(prev => !prev)}
+                                    aria-label={showPasswordConfirm ? "Hide confirm password" : "Show confirm password"}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        padding: "0 2px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        color: "var(--gray-9)",
+                                    }}
+                                >
+                                    {showPasswordConfirm
+                                        ? <EyeClosedIcon width="16" height="16" />
+                                        : <EyeOpenIcon width="16" height="16" />
+                                    }
+                                </button>
+                            </TextField.Slot>
+                        </TextField.Root>
+                        {fieldError("password-confirm") && (
+                            <Text as="p" size="1" color="red" mt="1" style={{ margin: "0.25rem 0 0" }}>
+                                {fieldError("password-confirm")}
+                            </Text>
+                        )}
+                    </label>
 
-                <Button
-                    type="submit"
-                    label={i18n.msgStr("doRegister")}
-                    disabled={isSubmitDisabled}
-                    style={{ width: "100%", marginBottom: "1.25rem" }}
-                />
+                    {/* Global form-level error message */}
+                    {kcContext.message?.type === "error" && (
+                        <Callout.Root color="red" role="alert">
+                            <Callout.Text>{kcContext.message.summary}</Callout.Text>
+                        </Callout.Root>
+                    )}
+
+                    <Button
+                        type="submit"
+                        size="3"
+                        loading={isSubmitDisabled}
+                        disabled={isSubmitDisabled}
+                        style={{ width: "100%", cursor: isSubmitDisabled ? "not-allowed" : "pointer" }}
+                    >
+                        {i18n.msgStr("doRegister")}
+                    </Button>
+                </Flex>
             </form>
 
-            <p style={{ textAlign: "center", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: 0 }}>
+            <Text as="p" size="2" align="center" color="gray" mt="4" style={{ margin: "1rem 0 0" }}>
                 {i18n.msg("backToLogin")}{" "}
-                <a href={url.loginUrl} style={{ color: "var(--color-primary)", fontWeight: 700 }}>
-                    {i18n.msgStr("doLogIn")}
-                </a>
-            </p>
+                <Text asChild weight="bold" style={{ color: "var(--accent-9)" }}>
+                    <a href={url.loginUrl}>{i18n.msgStr("doLogIn")}</a>
+                </Text>
+            </Text>
         </AuthCard>
     );
 }
