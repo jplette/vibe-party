@@ -3,9 +3,15 @@ import type { KcContext } from "keycloakify/login/KcContext";
 import { useI18n } from "../i18n";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
-import { InputText } from "primereact/inputtext";
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
+import {
+    Button,
+    Callout,
+    Flex,
+    Switch,
+    Text,
+    TextField,
+} from "@radix-ui/themes";
+import { EyeClosedIcon, EyeOpenIcon } from "@radix-ui/react-icons";
 
 type LoginKcContext = Extract<KcContext, { pageId: "login.ftl" }>;
 
@@ -18,163 +24,159 @@ export default function Login({ kcContext }: Props) {
     const { url, realm, login, social } = kcContext;
     const [isLoginButtonDisabled, setIsLoginButtonDisabled] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(login.rememberMe === "on");
 
-    const labelStyle: React.CSSProperties = {
-        display: "block",
-        marginBottom: "0.375rem",
-        fontWeight: 600,
-        fontSize: "0.875rem",
-        color: "var(--color-text)"
-    };
+    const usernameLabel = !realm.loginWithEmailAllowed
+        ? i18n.msgStr("username")
+        : !realm.registrationEmailAsUsername
+        ? i18n.msgStr("usernameOrEmail")
+        : i18n.msgStr("email");
+
+    const messageColor = kcContext.message?.type === "error" ? "red" : "green";
 
     return (
         <AuthCard>
             <Logo />
 
             {kcContext.message && kcContext.message.type !== "warning" && (
-                <div style={{
-                    padding: "0.75rem 1rem",
-                    marginBottom: "1.25rem",
-                    borderRadius: "var(--radius-sm)",
-                    background: kcContext.message.type === "error" ? "#fff5f5" : "var(--color-success-bg)",
-                    color: kcContext.message.type === "error" ? "var(--color-danger)" : "var(--color-success)",
-                    border: `1px solid ${kcContext.message.type === "error" ? "#fecaca" : "#bbf7d0"}`,
-                    fontSize: "0.875rem"
-                }}>
-                    {kcContext.message.summary}
-                </div>
+                <Callout.Root color={messageColor} role="alert" mb="4">
+                    <Callout.Text>{kcContext.message.summary}</Callout.Text>
+                </Callout.Root>
             )}
 
-            <form action={url.loginAction} method="post" onSubmit={() => setIsLoginButtonDisabled(true)}>
-                <div style={{ marginBottom: "1.25rem" }}>
-                    <label htmlFor="username" style={labelStyle}>
-                        {!realm.loginWithEmailAllowed
-                            ? i18n.msgStr("username")
-                            : !realm.registrationEmailAsUsername
-                            ? i18n.msgStr("usernameOrEmail")
-                            : i18n.msgStr("email")}
+            <form
+                action={url.loginAction}
+                method="post"
+                onSubmit={() => setIsLoginButtonDisabled(true)}
+            >
+                <Flex direction="column" gap="4">
+                    {/* Username / email field */}
+                    <label>
+                        <Text as="div" size="2" weight="bold" mb="1">
+                            {usernameLabel}
+                        </Text>
+                        <TextField.Root
+                            id="username"
+                            name="username"
+                            defaultValue={login.username ?? ""}
+                            autoFocus
+                            autoComplete="username"
+                            size="2"
+                        />
                     </label>
-                    <InputText
-                        id="username"
-                        name="username"
-                        defaultValue={login.username ?? ""}
-                        autoFocus
-                        autoComplete="username"
-                        style={{ width: "100%" }}
-                    />
-                </div>
 
-                <div style={{ marginBottom: "0.75rem" }}>
-                    <label htmlFor="password" style={{ display: "block", marginBottom: "0.375rem", fontWeight: 600, fontSize: "0.875rem", color: "var(--color-text)" }}>
-                        {i18n.msgStr("password")}
-                    </label>
-                    <div style={{ position: "relative", width: "100%" }}>
-                        <InputText
+                    {/* Password field with show/hide toggle */}
+                    <label>
+                        <Text as="div" size="2" weight="bold" mb="1">
+                            {i18n.msgStr("password")}
+                        </Text>
+                        <TextField.Root
                             id="password"
                             name="password"
                             type={showPassword ? "text" : "password"}
                             autoComplete="current-password"
-                            style={{ width: "100%", paddingRight: "2.75rem" }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(prev => !prev)}
-                            style={{
-                                position: "absolute",
-                                right: "0.625rem",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: "0.25rem",
-                                color: "var(--color-text-muted)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            size="2"
                         >
-                            <i className={showPassword ? "pi pi-eye-slash" : "pi pi-eye"} style={{ fontSize: "1rem" }} />
-                        </button>
-                    </div>
-                </div>
+                            <TextField.Slot side="right">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(prev => !prev)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        padding: "0 2px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        color: "var(--gray-9)",
+                                    }}
+                                >
+                                    {showPassword
+                                        ? <EyeClosedIcon width="16" height="16" />
+                                        : <EyeOpenIcon width="16" height="16" />
+                                    }
+                                </button>
+                            </TextField.Slot>
+                        </TextField.Root>
+                    </label>
 
-                {(realm.rememberMe || realm.resetPasswordAllowed) && (
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
-                        {realm.rememberMe ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                <Checkbox
-                                    inputId="rememberMe"
-                                    name="rememberMe"
-                                    checked={login.rememberMe === "on"}
-                                    onChange={() => {/* controlled via form */}}
-                                />
-                                <label htmlFor="rememberMe" style={{ fontSize: "0.875rem", cursor: "pointer" }}>
-                                    {i18n.msgStr("rememberMe")}
-                                </label>
-                            </div>
-                        ) : (
-                            <span />
-                        )}
-                        {realm.resetPasswordAllowed && (
-                            <a href={url.loginResetCredentialsUrl} style={{ fontSize: "0.8125rem", color: "var(--color-nav)" }}>
-                                {i18n.msgStr("doForgotPassword")}
-                            </a>
-                        )}
-                    </div>
-                )}
+                    {/* Remember me + forgot password row */}
+                    {(realm.rememberMe || realm.resetPasswordAllowed) && (
+                        <Flex justify="between" align="center">
+                            {realm.rememberMe ? (
+                                <Flex align="center" gap="2">
+                                    <Switch
+                                        id="rememberMe"
+                                        checked={rememberMe}
+                                        onCheckedChange={setRememberMe}
+                                        size="1"
+                                    />
+                                    {/*
+                                     * Switch doesn't submit a name/value in HTML POST.
+                                     * A hidden input carries the rememberMe value to Keycloak.
+                                     */}
+                                    <input
+                                        type="hidden"
+                                        name="rememberMe"
+                                        value={rememberMe ? "on" : ""}
+                                    />
+                                    <label htmlFor="rememberMe" style={{ cursor: "pointer" }}>
+                                        <Text size="2">{i18n.msgStr("rememberMe")}</Text>
+                                    </label>
+                                </Flex>
+                            ) : (
+                                <span />
+                            )}
+                            {realm.resetPasswordAllowed && (
+                                <Text asChild size="2">
+                                    <a href={url.loginResetCredentialsUrl} style={{ color: "var(--color-nav, #004e89)" }}>
+                                        {i18n.msgStr("doForgotPassword")}
+                                    </a>
+                                </Text>
+                            )}
+                        </Flex>
+                    )}
 
-                <Button
-                    type="submit"
-                    label={i18n.msgStr("doLogIn")}
-                    disabled={isLoginButtonDisabled}
-                    style={{ width: "100%", marginBottom: "1.25rem" }}
-                />
+                    {/* Submit */}
+                    <Button
+                        type="submit"
+                        size="3"
+                        loading={isLoginButtonDisabled}
+                        disabled={isLoginButtonDisabled}
+                        style={{ width: "100%", cursor: isLoginButtonDisabled ? "not-allowed" : "pointer" }}
+                    >
+                        {i18n.msgStr("doLogIn")}
+                    </Button>
 
-                <input type="hidden" name="credentialId" value={kcContext.auth?.selectedCredential ?? ""} />
+                    <input
+                        type="hidden"
+                        name="credentialId"
+                        value={kcContext.auth?.selectedCredential ?? ""}
+                    />
+                </Flex>
             </form>
 
+            {/* Register link */}
             {realm.password && realm.registrationAllowed && (
-                <p style={{ textAlign: "center", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: "0" }}>
+                <Text as="p" size="2" align="center" color="gray" mt="4" style={{ margin: "1rem 0 0" }}>
                     {i18n.msgStr("noAccount")}{" "}
-                    <a href={url.registrationUrl} style={{ color: "var(--color-primary)", fontWeight: 700 }}>
-                        {i18n.msgStr("doRegister")}
-                    </a>
-                </p>
+                    <Text asChild weight="bold" style={{ color: "var(--accent-9)" }}>
+                        <a href={url.registrationUrl}>{i18n.msgStr("doRegister")}</a>
+                    </Text>
+                </Text>
             )}
 
-            {social && social.providers && social.providers.length > 0 && (
-                <div style={{ marginTop: "1.5rem" }}>
-                    <div style={{ textAlign: "center", fontSize: "0.8125rem", color: "var(--color-text-muted)", marginBottom: "0.75rem" }}>
-                        or continue with
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        {social.providers.map(provider => (
-                            <a
-                                key={provider.providerId}
-                                href={provider.loginUrl}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: "0.5rem",
-                                    padding: "0.625rem 1rem",
-                                    border: "1px solid var(--color-border)",
-                                    borderRadius: "var(--radius-sm)",
-                                    fontSize: "0.875rem",
-                                    fontWeight: 600,
-                                    color: "var(--color-text)",
-                                    textDecoration: "none",
-                                    background: "#fff",
-                                    transition: "var(--transition-fast)"
-                                }}
-                            >
-                                {provider.displayName}
-                            </a>
-                        ))}
-                    </div>
-                </div>
+            {/* Social providers */}
+            {social?.providers && social.providers.length > 0 && (
+                <Flex direction="column" gap="2" mt="4">
+                    <Text size="1" align="center" color="gray">or continue with</Text>
+                    {social.providers.map(provider => (
+                        <Button key={provider.providerId} asChild variant="outline" size="2">
+                            <a href={provider.loginUrl}>{provider.displayName}</a>
+                        </Button>
+                    ))}
+                </Flex>
             )}
         </AuthCard>
     );

@@ -2,68 +2,45 @@
 @import "./_fonts.css";
 @import "./_variables.css";
 
-/* Global resets for Keycloak theme */
+/* Override Radix UI "orange" accent with our exact brand color */
+:root,
+.radix-themes {
+  --accent-9: #ff6b35;   /* Atomic Tangerine — primary button background */
+  --accent-10: #e55a24;  /* Darker shade — hover state */
+  --accent-11: #c44b1c;  /* Darkest — active/pressed */
+}
+
+/* Global resets */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
-  font-family: 'Lato', sans-serif;
-  background: var(--color-surface-beige-faint, #f9f9ee);
-  color: var(--color-text, #212529);
+  font-family: 'Lato', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* PrimeReact overrides to match vibe-party design */
-.p-button.p-button-primary,
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link) {
-  background: var(--color-primary, #ff6b35);
-  border-color: var(--color-primary, #ff6b35);
-  color: #ffffff;
-  font-weight: 700;
-  font-family: 'Lato', sans-serif;
+/* Apply Lato to all Radix UI components */
+.radix-themes {
+  font-family: 'Lato', system-ui, sans-serif;
 }
 
-.p-button.p-button-primary:hover,
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):hover {
-  background: var(--color-primary-dark, #e55a24);
-  border-color: var(--color-primary-dark, #e55a24);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-primary);
+/* Floating emoji bubble animation — used in AuthCard */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-16px); }
 }
 
-.p-inputtext,
-.p-password input {
-  border-radius: var(--radius-sm, 6px);
-  border-color: var(--color-border, #e9ecef);
-  font-family: 'Lato', sans-serif;
-}
-
-.p-inputtext:focus,
-.p-password input:focus {
-  border-color: var(--color-primary, #ff6b35);
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
-}
-
-.p-button {
-  border-radius: var(--radius-sm, 6px);
-  font-family: 'Lato', sans-serif;
-  transition: var(--transition-fast);
-}
-
-a {
-  color: var(--color-nav, #004e89);
-  text-decoration: none;
-}
-
-a:hover {
-  color: var(--color-nav-hover, #003d6b);
-  text-decoration: underline;
-}
-
-/* Checkbox accent color */
-.p-checkbox .p-checkbox-box.p-highlight {
-  background: var(--color-primary, #ff6b35);
-  border-color: var(--color-primary, #ff6b35);
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

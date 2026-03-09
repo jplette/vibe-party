@@ -3,8 +3,7 @@ import type { KcContext } from "keycloakify/login/KcContext";
 import { useI18n } from "../i18n";
 import AuthCard from "../../components/AuthCard";
 import Logo from "../../components/Logo";
-import { InputText } from "primereact/inputtext";
-import { Button } from "primereact/button";
+import { Button, Flex, Text, TextField } from "@radix-ui/themes";
 
 type LoginResetPasswordKcContext = Extract<KcContext, { pageId: "login-reset-password.ftl" }>;
 
@@ -17,47 +16,59 @@ export default function LoginResetPassword({ kcContext }: Props) {
     const { url, realm } = kcContext;
     const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
+    const inputLabel = !realm.loginWithEmailAllowed
+        ? i18n.msgStr("username")
+        : !realm.registrationEmailAsUsername
+        ? i18n.msgStr("usernameOrEmail")
+        : i18n.msgStr("email");
+
     return (
         <AuthCard>
             <Logo />
-            <h2 style={{ textAlign: "center", fontSize: "1.125rem", fontWeight: 700, color: "var(--color-nav)", marginTop: 0, marginBottom: "0.5rem" }}>
+            <Text as="p" size="4" weight="bold" align="center"
+                style={{ margin: "0 0 0.375rem", color: "var(--color-nav, #004e89)" }}>
                 {i18n.msgStr("emailForgotTitle")}
-            </h2>
-            <p style={{ textAlign: "center", fontSize: "0.875rem", color: "var(--color-text-muted)", marginTop: 0, marginBottom: "1.5rem" }}>
+            </Text>
+            <Text as="p" size="2" align="center" color="gray" style={{ margin: "0 0 1.5rem" }}>
                 Enter your email and we'll send you a reset link.
-            </p>
+            </Text>
 
-            <form action={url.loginAction} method="post" onSubmit={() => setIsSubmitDisabled(true)}>
-                <div style={{ marginBottom: "1.5rem" }}>
-                    <label htmlFor="username" style={{ display: "block", fontWeight: 600, fontSize: "0.875rem", marginBottom: "0.375rem" }}>
-                        {!realm.loginWithEmailAllowed
-                            ? i18n.msgStr("username")
-                            : !realm.registrationEmailAsUsername
-                            ? i18n.msgStr("usernameOrEmail")
-                            : i18n.msgStr("email")}
+            <form
+                action={url.loginAction}
+                method="post"
+                onSubmit={() => setIsSubmitDisabled(true)}
+            >
+                <Flex direction="column" gap="4">
+                    <label>
+                        <Text as="div" size="2" weight="bold" mb="1">
+                            {inputLabel}
+                        </Text>
+                        <TextField.Root
+                            id="username"
+                            name="username"
+                            autoFocus
+                            autoComplete="username"
+                            size="2"
+                        />
                     </label>
-                    <InputText
-                        id="username"
-                        name="username"
-                        autoFocus
-                        autoComplete="username"
-                        style={{ width: "100%" }}
-                    />
-                </div>
 
-                <Button
-                    type="submit"
-                    label={i18n.msgStr("doSubmit")}
-                    disabled={isSubmitDisabled}
-                    style={{ width: "100%", marginBottom: "1.25rem" }}
-                />
+                    <Button
+                        type="submit"
+                        size="3"
+                        loading={isSubmitDisabled}
+                        disabled={isSubmitDisabled}
+                        style={{ width: "100%", cursor: isSubmitDisabled ? "not-allowed" : "pointer" }}
+                    >
+                        {i18n.msgStr("doSubmit")}
+                    </Button>
+                </Flex>
             </form>
 
-            <p style={{ textAlign: "center", margin: 0 }}>
-                <a href={url.loginUrl} style={{ fontSize: "0.875rem", color: "var(--color-nav)" }}>
-                    {i18n.msg("backToLogin")}
-                </a>
-            </p>
+            <Text as="p" align="center" mt="4" style={{ margin: "1rem 0 0" }}>
+                <Text asChild size="2" style={{ color: "var(--color-nav, #004e89)" }}>
+                    <a href={url.loginUrl}>{i18n.msg("backToLogin")}</a>
+                </Text>
+            </Text>
         </AuthCard>
     );
 }
