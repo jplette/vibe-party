@@ -1,4 +1,4 @@
-import { Box, Container, Flex, Grid, Text, Heading, Button, Card } from '@radix-ui/themes';
+import { Box, Container, Flex, Grid, Text, Heading, Button, Card, Theme } from '@radix-ui/themes';
 import {
   CheckCircledIcon,
   RocketIcon,
@@ -128,6 +128,69 @@ const ANIMATION_CSS = `
       transform: none !important;
     }
   }
+
+  /* ── Dark mode overrides for the hero section ── */
+  .dark .landing-hero {
+    background-color: #141414 !important;
+  }
+  .dark .landing-hero-blob-top {
+    background: radial-gradient(circle, rgba(255,107,53,0.10) 0%, rgba(255,107,53,0) 70%) !important;
+  }
+  .dark .landing-hero-blob-bottom {
+    background: radial-gradient(circle, rgba(0,78,137,0.12) 0%, rgba(0,78,137,0) 70%) !important;
+  }
+  .dark .landing-hero-badge {
+    background: rgba(255,107,53,0.15) !important;
+    border-color: rgba(255,107,53,0.35) !important;
+  }
+  .dark .landing-hero-badge-text {
+    color: #f7a07a !important;
+  }
+  .dark .landing-hero-heading {
+    color: #f0ede6 !important;
+  }
+  .dark .landing-hero-sub {
+    color: rgba(240,237,230,0.65) !important;
+  }
+  .dark .landing-ghost-btn {
+    color: rgba(240,237,230,0.9) !important;
+    border-color: rgba(240,237,230,0.2) !important;
+    background: rgba(255,255,255,0.06) !important;
+  }
+  .dark .landing-ghost-btn:hover {
+    background: rgba(255,255,255,0.1) !important;
+  }
+  .dark .landing-hero-avatar-ring {
+    border-color: #141414 !important;
+  }
+  .dark .landing-hero-social-text {
+    color: rgba(240,237,230,0.55) !important;
+  }
+  .dark .landing-hero-wave {
+    background-color: #141414 !important;
+  }
+
+  /* ── Dark mode override for the features section ── */
+  .dark .landing-features {
+    background-color: #111111 !important;
+  }
+
+  /* ── Dark mode override for the wave transition between features and CTA ── */
+  .dark .landing-wave-transition {
+    background-color: #111111 !important;
+  }
+
+  /* ── Dark mode override for the CTA band (section above footer) ── */
+  .dark .landing-cta-band {
+    background-color: #222222 !important;
+  }
+  .dark .landing-cta-wave-path {
+    fill: #222222 !important;
+  }
+  .dark .landing-cta-orb-right,
+  .dark .landing-cta-orb-left {
+    opacity: 0 !important;
+  }
 `;
 
 // ─── Feature data ─────────────────────────────────────────────────────────────
@@ -182,12 +245,13 @@ export function LandingPage() {
     <>
       <style>{ANIMATION_CSS}</style>
 
-      <Box style={{ minHeight: '100vh', overflowX: 'hidden' }}>
+      <Box style={{ minHeight: '100vh' }}>
         {/* ── Sticky Nav ──────────────────────────────────────────────────── */}
         <LandingNav />
 
         {/* ── Hero ────────────────────────────────────────────────────────── */}
         <Box
+          className="landing-hero"
           style={{
             backgroundColor: '#efefd0',
             position: 'relative',
@@ -199,6 +263,7 @@ export function LandingPage() {
           {/* Decorative radial blobs */}
           <Box
             aria-hidden="true"
+            className="landing-hero-blob-top"
             style={{
               position: 'absolute',
               top: '-80px',
@@ -213,6 +278,7 @@ export function LandingPage() {
           />
           <Box
             aria-hidden="true"
+            className="landing-hero-blob-bottom"
             style={{
               position: 'absolute',
               bottom: '60px',
@@ -285,6 +351,7 @@ export function LandingPage() {
                 <Text
                   size="1"
                   weight="medium"
+                  className="landing-hero-badge-text"
                   style={{ color: '#c44b1c', letterSpacing: '0.04em', textTransform: 'uppercase' }}
                 >
                   Event Planning, Reimagined
@@ -299,7 +366,7 @@ export function LandingPage() {
                   fontSize: 'clamp(3rem, 8vw, 5.5rem)',
                   fontWeight: 400,
                   lineHeight: 1.1,
-                  color: '#1a1a2e',
+                  color: '#1a1a1a',
                   marginBottom: '1.5rem',
                   maxWidth: '720px',
                   fontFamily: 'var(--font-display)',
@@ -325,7 +392,7 @@ export function LandingPage() {
                 as="p"
                 size="4"
                 style={{
-                  color: '#4a4a5a',
+                  color: '#4a4a4a',
                   maxWidth: '520px',
                   lineHeight: 1.65,
                   marginBottom: '2.5rem',
@@ -365,8 +432,8 @@ export function LandingPage() {
                   variant="outline"
                   className="landing-ghost-btn"
                   style={{
-                    color: '#1a1a2e',
-                    borderColor: 'rgba(26,26,46,0.25)',
+                    color: '#1a1a1a',
+                    borderColor: 'rgba(26,26,26,0.25)',
                     fontWeight: 600,
                     padding: '0 2rem',
                     height: '52px',
@@ -393,6 +460,7 @@ export function LandingPage() {
                   {['#ff6b35', '#004e89', '#4ade80', '#a78bfa'].map((color, i) => (
                     <Box
                       key={color}
+                      className="landing-hero-avatar-ring"
                       style={{
                         width: 28,
                         height: 28,
@@ -405,7 +473,7 @@ export function LandingPage() {
                     />
                   ))}
                 </Flex>
-                <Text size="2" style={{ color: '#4a4a5a' }}>
+                <Text size="2" className="landing-hero-social-text" style={{ color: '#4a4a4a' }}>
                   Hundreds of events planned this month
                 </Text>
               </Flex>
@@ -416,6 +484,7 @@ export function LandingPage() {
           <svg
             viewBox="0 0 1440 90"
             preserveAspectRatio="none"
+            className="landing-hero-wave"
             style={{ display: 'block', width: '100%', height: '90px', backgroundColor: '#efefd0' }}
             aria-hidden="true"
           >
@@ -431,7 +500,7 @@ export function LandingPage() {
             />
             <path
               d="M0,90 L1440,90 L1440,75 C900,52 480,85 0,75 Z"
-              fill="#1a1a2e"
+              fill="#111111"
             />
           </svg>
         </Box>
@@ -439,12 +508,14 @@ export function LandingPage() {
         {/* ── Features ────────────────────────────────────────────────────── */}
         <Box
           id="features"
+          className="landing-features"
           style={{
-            backgroundColor: '#1a1a2e',
+            backgroundColor: '#111111',
             paddingTop: '5rem',
             paddingBottom: '5rem',
           }}
         >
+          <Theme appearance="dark">
           <Container size="4">
             {/* Section label */}
             <Flex direction="column" align="center" mb="6" style={{ textAlign: 'center' }}>
@@ -562,21 +633,23 @@ export function LandingPage() {
               ))}
             </Grid>
           </Container>
+          </Theme>
         </Box>
 
         {/* ── Wave up from dark to CTA band ───────────────────────────────── */}
-        <Box style={{ backgroundColor: '#004e89', lineHeight: 0 }} aria-hidden="true">
+        <Box className="landing-wave-transition landing-cta-band" style={{ backgroundColor: '#004e89', lineHeight: 0 }} aria-hidden="true">
           <svg
             viewBox="0 0 1440 60"
             preserveAspectRatio="none"
-            style={{ display: 'block', width: '100%', height: '60px', backgroundColor: '#1a1a2e' }}
+            style={{ display: 'block', width: '100%', height: '60px', backgroundColor: '#111111' }}
           >
-            <path d="M0,0 C480,60 960,0 1440,40 L1440,60 L0,60 Z" fill="#004e89" />
+            <path className="landing-cta-wave-path" d="M0,0 C480,60 960,0 1440,40 L1440,60 L0,60 Z" fill="#004e89" />
           </svg>
         </Box>
 
         {/* ── CTA Band ────────────────────────────────────────────────────── */}
         <Box
+          className="landing-cta-band"
           style={{
             backgroundColor: '#004e89',
             paddingTop: '4.5rem',
@@ -588,6 +661,7 @@ export function LandingPage() {
           {/* Subtle orb decoration */}
           <Box
             aria-hidden="true"
+            className="landing-cta-orb-right"
             style={{
               position: 'absolute',
               top: '-100px',
@@ -602,6 +676,7 @@ export function LandingPage() {
           />
           <Box
             aria-hidden="true"
+            className="landing-cta-orb-left"
             style={{
               position: 'absolute',
               bottom: '-80px',
@@ -694,7 +769,7 @@ export function LandingPage() {
         {/* ── Footer ──────────────────────────────────────────────────────── */}
         <footer
           style={{
-            backgroundColor: '#12122a',
+            backgroundColor: '#0f0f0f',
             borderTop: '1px solid rgba(255,255,255,0.06)',
             paddingTop: '2rem',
             paddingBottom: '2rem',
