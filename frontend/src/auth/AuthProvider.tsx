@@ -112,7 +112,7 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
   const login = async (returnTo?: string) => {
     // Pass the intended destination through the OIDC state so CallbackPage can
     // redirect the user back to the original URL after authentication.
-    await userManager.signinRedirect({ state: returnTo ?? '/' });
+    await userManager.signinRedirect({ state: returnTo ?? '/dashboard' });
   };
 
   const logout = async () => {
