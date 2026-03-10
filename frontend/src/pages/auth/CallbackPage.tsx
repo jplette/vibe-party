@@ -12,7 +12,15 @@ export function CallbackPage() {
   useEffect(() => {
     userManager
       .signinRedirectCallback()
-      .then(() => navigate('/dashboard', { replace: true }))
+      .then((user) => {
+        // Restore the original deep-link URL that was passed as OIDC state before
+        // the redirect to Keycloak. Fall back to /dashboard if nothing was stored.
+        const returnTo =
+          typeof user.state === 'string' && user.state.startsWith('/')
+            ? user.state
+            : '/dashboard';
+        navigate(returnTo, { replace: true });
+      })
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : 'Authentication failed')
       );

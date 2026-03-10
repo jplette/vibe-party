@@ -3,6 +3,7 @@ import { useAuthContext } from './AuthProvider';
 
 export function useAuth() {
   const { login, logout, silentRenew, register, userManager } = useAuthContext();
+  // login(returnTo?) — returnTo is the path to redirect back to after authentication
   const { accessToken, oidcUser, isAuthenticated, isLoading } = useAuthStore();
   const profile = oidcUser?.profile;
   return {
