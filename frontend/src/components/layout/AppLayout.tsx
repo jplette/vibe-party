@@ -5,7 +5,7 @@ import {
   Flex,
   Text,
   Avatar,
-  DropdownMenu,
+  Switch,
   IconButton,
   Separator,
 } from '@radix-ui/themes';
@@ -17,7 +17,9 @@ import {
   HamburgerMenuIcon,
   Cross1Icon,
   ExitIcon,
+  PersonIcon,
 } from '@radix-ui/react-icons';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { useAuth } from '../../auth/useAuth';
 import { useThemeStore } from '../../stores/themeStore';
 
@@ -36,11 +38,21 @@ interface SidebarProps {
   initials: string;
   mode: 'light' | 'dark';
   onLogout: () => void;
+  onToggleMode: () => void;
   onClose?: () => void;
   showCloseButton?: boolean;
 }
 
-function Sidebar({ name, email, initials, mode, onLogout, onClose, showCloseButton }: SidebarProps) {
+function Sidebar({
+  name,
+  email,
+  initials,
+  mode,
+  onLogout,
+  onToggleMode,
+  onClose,
+  showCloseButton,
+}: SidebarProps) {
   const isDark = mode === 'dark';
 
   // Color tokens derived from mode
@@ -57,9 +69,15 @@ function Sidebar({ name, email, initials, mode, onLogout, onClose, showCloseButt
   const navActiveTextColor = '#ff6b35';
   const navHoverBg = isDark ? 'rgba(255,255,255,0.06)' : 'var(--gray-2)';
 
-  // User section colors
+  // User section / popover colors
   const userNameColor = isDark ? '#ffffff' : '#212529';
   const userEmailColor = isDark ? 'rgba(255,255,255,0.5)' : '#6c757d';
+  const popoverBg = isDark ? '#242424' : '#ffffff';
+  const popoverBorder = isDark ? 'rgba(255,255,255,0.1)' : 'var(--gray-4)';
+  const popoverRowHoverBg = isDark ? 'rgba(255,255,255,0.06)' : 'var(--gray-2)';
+  const popoverLabelColor = isDark ? 'rgba(255,255,255,0.55)' : '#6c757d';
+  const popoverValueColor = isDark ? 'rgba(255,255,255,0.9)' : '#212529';
+  const popoverLogoutHoverBg = isDark ? 'rgba(229,92,20,0.15)' : '#fff1ec';
 
   return (
     <Box
@@ -170,23 +188,49 @@ function Sidebar({ name, email, initials, mode, onLogout, onClose, showCloseButt
         ))}
       </Flex>
 
-      {/* User section */}
+      {/* User section — Popover trigger */}
       <Box p="3">
         <Separator mb="3" style={{ backgroundColor: separatorColor }} />
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            <Flex
-              align="center"
-              gap="2"
-              style={{ cursor: 'pointer' }}
-              aria-label="User menu"
+
+        <PopoverPrimitive.Root>
+          <PopoverPrimitive.Trigger asChild>
+            {/*
+             * The trigger must be a single focusable element.
+             * We wrap the avatar row in a plain <button> so Radix can
+             * attach its click / keyboard handlers without nesting issues.
+             */}
+            <button
+              style={{
+                all: 'unset',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-3)',
+                padding: '6px 8px',
+                boxSizing: 'border-box',
+                transition: 'background-color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = navHoverBg;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+              }}
+              aria-label="Open user menu"
             >
               <Avatar
                 size="2"
+                radius="full"
                 fallback={initials}
-                style={{ backgroundColor: '#ff6b35', color: '#fff', flexShrink: 0 }}
+                style={{
+                  backgroundColor: isDark ? '#ffffff' : '#ff6b35',
+                  color: isDark ? '#212529' : '#ffffff',
+                  flexShrink: 0,
+                }}
               />
-              <Box style={{ minWidth: 0 }}>
+              <Box style={{ minWidth: 0, flex: 1 }}>
                 <Text
                   size="1"
                   weight="bold"
@@ -215,14 +259,146 @@ function Sidebar({ name, email, initials, mode, onLogout, onClose, showCloseButt
                   </Text>
                 )}
               </Box>
-            </Flex>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Item color="red" onClick={onLogout}>
-              <ExitIcon /> Log Out
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+              {/* Chevron hint — subtle upward arrow */}
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                fill="none"
+                aria-hidden="true"
+                style={{ flexShrink: 0, color: isDark ? 'rgba(255,255,255,0.35)' : 'var(--gray-8)' }}
+              >
+                <path
+                  d="M2 7L5 3.5L8 7"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </PopoverPrimitive.Trigger>
+
+          {/*
+           * side="top" → opens above the trigger so it never clips behind the
+           * viewport bottom. align="start" → left-aligned with the trigger.
+           * sideOffset=8 → breathing room between trigger and card.
+           *
+           * overflow: 'visible' on Content so the Arrow SVG is not clipped.
+           * The inner wrapper carries overflow: 'hidden' + border-radius so
+           * content corners are clipped without affecting the arrow.
+           */}
+          <PopoverPrimitive.Content
+            side="top"
+            align="start"
+            sideOffset={8}
+            style={{
+              width: 240,
+              padding: 0,
+              overflow: 'visible',
+              background: 'transparent',
+              border: 'none',
+              boxShadow: 'none',
+              zIndex: 9999,
+            }}
+          >
+            <PopoverPrimitive.Arrow
+              style={{ fill: popoverBg, display: 'block' }}
+              width={12}
+              height={6}
+            />
+
+            {/* Inner card — carries all visual styling; overflow hidden prevents scrollbars */}
+            <Box
+              style={{
+                backgroundColor: popoverBg,
+                border: `1px solid ${popoverBorder}`,
+                borderRadius: 'var(--radius-4)',
+                boxShadow: isDark
+                  ? '0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35)'
+                  : '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* ── Theme toggle row ───────────────────────────────────────── */}
+              <Box style={{ padding: '4px 0' }}>
+                <Flex
+                  align="center"
+                  justify="between"
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 0,
+                    transition: 'background-color 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = popoverRowHoverBg;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <Flex align="center" gap="2">
+                    {isDark ? (
+                      <MoonIcon
+                        style={{ color: popoverLabelColor, width: 14, height: 14 }}
+                      />
+                    ) : (
+                      <SunIcon
+                        style={{ color: popoverLabelColor, width: 14, height: 14 }}
+                      />
+                    )}
+                    <Text size="2" style={{ color: popoverValueColor }}>
+                      {isDark ? 'Dark mode' : 'Light mode'}
+                    </Text>
+                  </Flex>
+                  <Switch
+                    size="1"
+                    checked={isDark}
+                    onCheckedChange={onToggleMode}
+                    aria-label="Toggle dark mode"
+                    color="orange"
+                  />
+                </Flex>
+              </Box>
+
+              {/* ── Divider ────────────────────────────────────────────────── */}
+              <Box style={{ padding: '0 12px' }}>
+                <Separator style={{ backgroundColor: popoverBorder, width: '100%' }} />
+              </Box>
+
+              {/* ── Logout button ──────────────────────────────────────────── */}
+              <Box style={{ padding: '4px 0 4px' }}>
+                <button
+                  onClick={onLogout}
+                  style={{
+                    all: 'unset',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 16px',
+                    boxSizing: 'border-box',
+                    cursor: 'pointer',
+                    borderRadius: 0,
+                    transition: 'background-color 0.15s',
+                    color: '#e55a24',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = popoverLogoutHoverBg;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <ExitIcon style={{ width: 14, height: 14 }} />
+                  <Text size="2" weight="medium" style={{ color: 'inherit' }}>
+                    Log out
+                  </Text>
+                </button>
+              </Box>
+            </Box>
+          </PopoverPrimitive.Content>
+        </PopoverPrimitive.Root>
       </Box>
     </Box>
   );
@@ -278,6 +454,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     initials,
     mode,
     onLogout: handleLogout,
+    onToggleMode: toggleMode,
   };
 
   return (
@@ -341,7 +518,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </IconButton>
             </Flex>
 
-            {/* Right: theme toggle */}
+            {/* Right: theme toggle + user icon (mobile only) */}
             <Flex align="center" gap="2">
               <IconButton
                 variant="ghost"
@@ -350,6 +527,61 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
               </IconButton>
+              {/* Mobile user menu — visible when sidebar is hidden */}
+              <PopoverPrimitive.Root>
+                <PopoverPrimitive.Trigger asChild>
+                  <IconButton
+                    className="vp-hamburger"
+                    variant="ghost"
+                    aria-label="Open user menu"
+                  >
+                    <PersonIcon />
+                  </IconButton>
+                </PopoverPrimitive.Trigger>
+                {/*
+                 * overflow: 'visible' on Content keeps the Arrow from being clipped.
+                 * The inner card box carries overflow: 'hidden' to prevent scrollbars.
+                 */}
+                <PopoverPrimitive.Content
+                  side="bottom"
+                  align="end"
+                  sideOffset={8}
+                  style={{
+                    width: 240,
+                    padding: 0,
+                    overflow: 'visible',
+                    background: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    zIndex: 9999,
+                  }}
+                >
+                  <PopoverPrimitive.Arrow
+                    style={{ fill: mode === 'dark' ? '#242424' : '#ffffff', display: 'block' }}
+                    width={12}
+                    height={6}
+                  />
+                  {/* Inner card */}
+                  <Box
+                    style={{
+                      backgroundColor: mode === 'dark' ? '#242424' : '#ffffff',
+                      border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'var(--gray-4)'}`,
+                      borderRadius: 'var(--radius-4)',
+                      boxShadow:
+                        mode === 'dark'
+                          ? '0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35)'
+                          : '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <MobileUserMenuContent
+                      mode={mode}
+                      onToggleMode={toggleMode}
+                      onLogout={handleLogout}
+                    />
+                  </Box>
+                </PopoverPrimitive.Content>
+              </PopoverPrimitive.Root>
             </Flex>
           </Flex>
 
@@ -359,6 +591,101 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </Box>
         </Flex>
       </Flex>
+    </>
+  );
+}
+
+// ─── Mobile user menu content ─────────────────────────────────────────────────
+// Shared popover body used in the mobile top-header user button.
+// The sidebar version is inlined directly into the Sidebar component above.
+
+interface MobileUserMenuContentProps {
+  mode: 'light' | 'dark';
+  onToggleMode: () => void;
+  onLogout: () => void;
+}
+
+function MobileUserMenuContent({
+  mode,
+  onToggleMode,
+  onLogout,
+}: MobileUserMenuContentProps) {
+  const isDark = mode === 'dark';
+  const popoverBorder = isDark ? 'rgba(255,255,255,0.1)' : 'var(--gray-4)';
+  const popoverRowHoverBg = isDark ? 'rgba(255,255,255,0.06)' : 'var(--gray-2)';
+  const popoverLabelColor = isDark ? 'rgba(255,255,255,0.55)' : '#6c757d';
+  const popoverValueColor = isDark ? 'rgba(255,255,255,0.9)' : '#212529';
+  const popoverLogoutHoverBg = isDark ? 'rgba(229,92,20,0.15)' : '#fff1ec';
+
+  return (
+    <>
+      {/* Theme toggle */}
+      <Box style={{ padding: '4px 0' }}>
+        <Flex
+          align="center"
+          justify="between"
+          style={{ padding: '8px 16px', transition: 'background-color 0.15s' }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = popoverRowHoverBg;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+          }}
+        >
+          <Flex align="center" gap="2">
+            {isDark ? (
+              <MoonIcon style={{ color: popoverLabelColor, width: 14, height: 14 }} />
+            ) : (
+              <SunIcon style={{ color: popoverLabelColor, width: 14, height: 14 }} />
+            )}
+            <Text size="2" style={{ color: popoverValueColor }}>
+              {isDark ? 'Dark mode' : 'Light mode'}
+            </Text>
+          </Flex>
+          <Switch
+            size="1"
+            checked={isDark}
+            onCheckedChange={onToggleMode}
+            aria-label="Toggle dark mode"
+            color="orange"
+          />
+        </Flex>
+      </Box>
+
+      {/* Divider */}
+      <Box style={{ padding: '0 12px' }}>
+        <Separator style={{ backgroundColor: popoverBorder, width: '100%' }} />
+      </Box>
+
+      {/* Logout */}
+      <Box style={{ padding: '4px 0 4px' }}>
+        <button
+          onClick={onLogout}
+          style={{
+            all: 'unset',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: '100%',
+            padding: '8px 16px',
+            boxSizing: 'border-box',
+            cursor: 'pointer',
+            transition: 'background-color 0.15s',
+            color: '#e55a24',
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = popoverLogoutHoverBg;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+          }}
+        >
+          <ExitIcon style={{ width: 14, height: 14 }} />
+          <Text size="2" weight="medium" style={{ color: 'inherit' }}>
+            Log out
+          </Text>
+        </button>
+      </Box>
     </>
   );
 }

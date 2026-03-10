@@ -67,14 +67,21 @@ export function LandingNav() {
               {mode === 'dark' ? <SunIcon width="16" height="16" /> : <MoonIcon width="16" height="16" />}
             </IconButton>
             <Button
-              variant="ghost"
+              variant="outline"
               size="2"
-              style={{ color: 'rgba(255,255,255,0.9)', cursor: 'pointer' }}
+              style={{
+                color: 'rgba(255,255,255,0.9)',
+                cursor: 'pointer',
+                borderColor: 'rgba(255,255,255,0.35)',
+                backgroundColor: 'transparent',
+                marginLeft: '8px',
+              }}
               onClick={login}
             >
               Log In
             </Button>
             <Button
+              variant="solid"
               size="2"
               style={{
                 backgroundColor: '#ff6b35',

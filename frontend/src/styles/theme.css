@@ -32,7 +32,17 @@
 /* Native datetime-local input styling inside Radix TextField */
 input[type='datetime-local'] {
   font-family: var(--font-default);
-  color-scheme: light dark;
+  /* Default to light color-scheme so the browser calendar icon is dark
+     (visible on light backgrounds). */
+  color-scheme: light;
+}
+
+/* In dark mode Radix adds class="radix-themes dark" to the Theme root.
+   Switch to dark color-scheme so the browser renders the calendar icon
+   in a light color — otherwise it becomes invisible against the dark input
+   background. */
+.dark input[type='datetime-local'] {
+  color-scheme: dark;
 }
 
 /* Custom scrollbar */
