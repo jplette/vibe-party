@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/vibe-party/backend/internal/model"
@@ -26,8 +27,12 @@ type eventRepository interface {
 type todoRepository interface {
 	ListByEventID(ctx context.Context, eventID uuid.UUID) ([]model.Todo, error)
 	Create(ctx context.Context, eventID uuid.UUID, title, description string) (*model.Todo, error)
+	GetByID(ctx context.Context, todoID, eventID uuid.UUID) (*model.Todo, error)
 	Update(ctx context.Context, todoID, eventID uuid.UUID, title, description string) (*model.Todo, error)
 	Assign(ctx context.Context, todoID, eventID uuid.UUID, assigneeID *uuid.UUID) (*model.Todo, error)
+	AssignToInvitation(ctx context.Context, todoID, eventID, invitationID uuid.UUID) (*model.Todo, error)
+	SetDueDate(ctx context.Context, todoID, eventID uuid.UUID, dueDate *time.Time) (*model.Todo, error)
+	TransferInvitationAssignment(ctx context.Context, invitationID, userID uuid.UUID) error
 	ToggleComplete(ctx context.Context, todoID, eventID uuid.UUID) (*model.Todo, error)
 	Delete(ctx context.Context, todoID, eventID uuid.UUID) error
 }
@@ -48,6 +53,7 @@ type invitationRepository interface {
 	ListByEventID(ctx context.Context, eventID uuid.UUID) ([]model.Invitation, error)
 	Delete(ctx context.Context, invID, eventID uuid.UUID) error
 	GetByToken(ctx context.Context, token string) (*model.Invitation, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*model.Invitation, error)
 	UpdateStatus(ctx context.Context, invID uuid.UUID, status string) error
 	ListAcceptedByEmail(ctx context.Context, email string) ([]model.Invitation, error)
 }
@@ -59,7 +65,8 @@ type userRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
-// emailSender is the subset of email.Service used by InvitationService.
+// emailSender is the subset of email.Service used by InvitationService and TodoService.
 type emailSender interface {
 	SendInvitation(recipientEmail, eventName, token string) error
+	SendTodoAssignment(recipientEmail, eventName, todoTitle string) error
 }

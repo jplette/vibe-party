@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/vibe-party/backend/internal/service"
@@ -28,8 +29,12 @@ type updateTodoRequest struct {
 }
 
 type assignTodoRequest struct {
-	// AssignedTo is a user UUID. Omit or set to null to unassign.
-	AssignedTo *string `json:"assigned_to"`
+	AssignedTo           *string `json:"assignedTo"`
+	AssignedInvitationId *string `json:"assignedInvitationId"`
+}
+
+type setDueDateRequest struct {
+	DueDate *string `json:"dueDate"`
 }
 
 // ListTodos handles GET /events/:id/todos.
@@ -134,17 +139,75 @@ func (h *TodoHandler) AssignTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.AssignedTo != nil && req.AssignedInvitationId != nil {
+		RespondError(w, http.StatusBadRequest, "assignedTo and assignedInvitationId are mutually exclusive")
+		return
+	}
+
+	if req.AssignedInvitationId != nil {
+		invitationID, parseErr := uuid.Parse(*req.AssignedInvitationId)
+		if parseErr != nil {
+			RespondError(w, http.StatusBadRequest, "invalid assignedInvitationId uuid")
+			return
+		}
+		todo, svcErr := h.todoSvc.AssignTodoToInvitation(r.Context(), eventID, todoID, user.ID, invitationID)
+		if HandleServiceError(w, svcErr) {
+			return
+		}
+		RespondJSON(w, http.StatusOK, todo)
+		return
+	}
+
 	var assigneeID *uuid.UUID
 	if req.AssignedTo != nil && *req.AssignedTo != "" {
 		parsed, parseErr := uuid.Parse(*req.AssignedTo)
 		if parseErr != nil {
-			RespondError(w, http.StatusBadRequest, "invalid assigned_to uuid")
+			RespondError(w, http.StatusBadRequest, "invalid assignedTo uuid")
 			return
 		}
 		assigneeID = &parsed
 	}
 
-	todo, err := h.todoSvc.AssignTodo(r.Context(), eventID, todoID, user.ID, assigneeID)
+	todo, err := h.todoSvc.AssignTodoToUser(r.Context(), eventID, todoID, user.ID, assigneeID)
+	if HandleServiceError(w, err) {
+		return
+	}
+	RespondJSON(w, http.StatusOK, todo)
+}
+
+// SetDueDate handles PATCH /events/:id/todos/:tid/due-date.
+func (h *TodoHandler) SetDueDate(w http.ResponseWriter, r *http.Request) {
+	user, ok := RequireUser(w, r)
+	if !ok {
+		return
+	}
+	eventID, err := parseUUIDParam(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+	todoID, err := parseUUIDParam(r, "tid")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid todo id")
+		return
+	}
+
+	var req setDueDateRequest
+	if !DecodeJSON(w, r, &req) {
+		return
+	}
+
+	var dueDate *time.Time
+	if req.DueDate != nil {
+		parsed, parseErr := time.Parse(time.RFC3339, *req.DueDate)
+		if parseErr != nil {
+			RespondError(w, http.StatusBadRequest, "dueDate must be RFC3339 format")
+			return
+		}
+		dueDate = &parsed
+	}
+
+	todo, err := h.todoSvc.SetTodoDueDate(r.Context(), eventID, todoID, user.ID, dueDate)
 	if HandleServiceError(w, err) {
 		return
 	}

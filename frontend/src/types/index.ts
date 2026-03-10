@@ -29,9 +29,15 @@ export interface Todo {
   title: string;
   description?: string;
   assignedTo?: string;
+  assignedInvitationId?: string;
+  dueDate?: string;
   completedAt?: string;
   createdAt: string;
 }
+
+export type AssigneeOption =
+  | { kind: 'member'; userId: string; name: string; email: string }
+  | { kind: 'invitation'; invitationId: string; email: string };
 
 export interface BringItem {
   id: string;

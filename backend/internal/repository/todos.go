@@ -25,7 +25,7 @@ func NewTodoRepository(db *pgxpool.Pool) *TodoRepository {
 // ListByEventID returns all todos for an event, ordered by creation time.
 func (r *TodoRepository) ListByEventID(ctx context.Context, eventID uuid.UUID) ([]model.Todo, error) {
 	const q = `
-		SELECT id, event_id, title, description, assigned_to, completed_at, created_at, updated_at
+		SELECT id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
 		FROM todos
 		WHERE event_id = $1
 		ORDER BY created_at ASC
@@ -52,7 +52,7 @@ func (r *TodoRepository) Create(ctx context.Context, eventID uuid.UUID, title, d
 	const q = `
 		INSERT INTO todos (event_id, title, description)
 		VALUES ($1, $2, $3)
-		RETURNING id, event_id, title, description, assigned_to, completed_at, created_at, updated_at
+		RETURNING id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
 	`
 	var descPtr *string
 	if description != "" {
@@ -69,7 +69,7 @@ func (r *TodoRepository) Create(ctx context.Context, eventID uuid.UUID, title, d
 // GetByID fetches a todo by its ID, ensuring it belongs to the given event.
 func (r *TodoRepository) GetByID(ctx context.Context, id, eventID uuid.UUID) (*model.Todo, error) {
 	const q = `
-		SELECT id, event_id, title, description, assigned_to, completed_at, created_at, updated_at
+		SELECT id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
 		FROM todos
 		WHERE id = $1 AND event_id = $2
 	`
@@ -92,7 +92,7 @@ func (r *TodoRepository) Update(ctx context.Context, id, eventID uuid.UUID, titl
 		    description = $4,
 		    updated_at  = NOW()
 		WHERE id = $1 AND event_id = $2
-		RETURNING id, event_id, title, description, assigned_to, completed_at, created_at, updated_at
+		RETURNING id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
 	`
 	var descPtr *string
 	if description != "" {
@@ -109,14 +109,15 @@ func (r *TodoRepository) Update(ctx context.Context, id, eventID uuid.UUID, titl
 	return t, nil
 }
 
-// Assign sets the assigned_to field. Pass nil to unassign.
+// Assign sets the assigned_to field and clears assigned_invitation_id. Pass nil to unassign.
 func (r *TodoRepository) Assign(ctx context.Context, id, eventID uuid.UUID, assignedTo *uuid.UUID) (*model.Todo, error) {
 	const q = `
 		UPDATE todos
-		SET assigned_to = $3,
-		    updated_at  = NOW()
+		SET assigned_to           = $3,
+		    assigned_invitation_id = NULL,
+		    updated_at             = NOW()
 		WHERE id = $1 AND event_id = $2
-		RETURNING id, event_id, title, description, assigned_to, completed_at, created_at, updated_at
+		RETURNING id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
 	`
 	row := r.db.QueryRow(ctx, q, id, eventID, assignedTo)
 	t, err := scanTodo(row)
@@ -129,6 +130,64 @@ func (r *TodoRepository) Assign(ctx context.Context, id, eventID uuid.UUID, assi
 	return t, nil
 }
 
+// AssignToInvitation sets the assigned_invitation_id and clears assigned_to.
+func (r *TodoRepository) AssignToInvitation(ctx context.Context, id, eventID, invitationID uuid.UUID) (*model.Todo, error) {
+	const q = `
+		UPDATE todos
+		SET assigned_invitation_id = $3,
+		    assigned_to             = NULL,
+		    updated_at              = NOW()
+		WHERE id = $1 AND event_id = $2
+		RETURNING id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
+	`
+	row := r.db.QueryRow(ctx, q, id, eventID, invitationID)
+	t, err := scanTodo(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("assign todo to invitation: %w", err)
+	}
+	return t, nil
+}
+
+// SetDueDate updates the due_date field of a todo.
+func (r *TodoRepository) SetDueDate(ctx context.Context, id, eventID uuid.UUID, dueDate *time.Time) (*model.Todo, error) {
+	const q = `
+		UPDATE todos
+		SET due_date   = $3,
+		    updated_at = NOW()
+		WHERE id = $1 AND event_id = $2
+		RETURNING id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
+	`
+	row := r.db.QueryRow(ctx, q, id, eventID, dueDate)
+	t, err := scanTodo(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("set due date: %w", err)
+	}
+	return t, nil
+}
+
+// TransferInvitationAssignment bulk-updates todos assigned to an invitation,
+// setting assigned_to = userID and clearing assigned_invitation_id.
+func (r *TodoRepository) TransferInvitationAssignment(ctx context.Context, invitationID, userID uuid.UUID) error {
+	const q = `
+		UPDATE todos
+		SET assigned_to             = $2,
+		    assigned_invitation_id  = NULL,
+		    updated_at              = NOW()
+		WHERE assigned_invitation_id = $1
+	`
+	_, err := r.db.Exec(ctx, q, invitationID, userID)
+	if err != nil {
+		return fmt.Errorf("transfer invitation assignment: %w", err)
+	}
+	return nil
+}
+
 // ToggleComplete sets completed_at to now if nil, or clears it if already set.
 func (r *TodoRepository) ToggleComplete(ctx context.Context, id, eventID uuid.UUID) (*model.Todo, error) {
 	const q = `
@@ -136,7 +195,7 @@ func (r *TodoRepository) ToggleComplete(ctx context.Context, id, eventID uuid.UU
 		SET completed_at = CASE WHEN completed_at IS NULL THEN NOW() ELSE NULL END,
 		    updated_at   = NOW()
 		WHERE id = $1 AND event_id = $2
-		RETURNING id, event_id, title, description, assigned_to, completed_at, created_at, updated_at
+		RETURNING id, event_id, title, description, assigned_to, assigned_invitation_id, due_date, completed_at, created_at, updated_at
 	`
 	row := r.db.QueryRow(ctx, q, id, eventID)
 	t, err := scanTodo(row)
@@ -166,20 +225,20 @@ func scanTodo(row interface {
 	Scan(dest ...any) error
 }) (*model.Todo, error) {
 	t := &model.Todo{}
-	var completedAt *time.Time
 	err := row.Scan(
 		&t.ID,
 		&t.EventID,
 		&t.Title,
 		&t.Description,
 		&t.AssignedTo,
-		&completedAt,
+		&t.AssignedInvitationID,
+		&t.DueDate,
+		&t.CompletedAt,
 		&t.CreatedAt,
 		&t.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
-	t.CompletedAt = completedAt
 	return t, nil
 }

@@ -65,14 +65,16 @@ type EventWithRole struct {
 
 // Todo represents a task within an event.
 type Todo struct {
-	ID          uuid.UUID  `json:"id"`
-	EventID     uuid.UUID  `json:"eventId"`
-	Title       string     `json:"title"`
-	Description *string    `json:"description,omitempty"`
-	AssignedTo  *uuid.UUID `json:"assignedTo,omitempty"`
-	CompletedAt *time.Time `json:"completedAt,omitempty"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+	ID                   uuid.UUID  `json:"id"`
+	EventID              uuid.UUID  `json:"eventId"`
+	Title                string     `json:"title"`
+	Description          *string    `json:"description,omitempty"`
+	AssignedTo           *uuid.UUID `json:"assignedTo,omitempty"`
+	AssignedInvitationID *uuid.UUID `json:"assignedInvitationId,omitempty"`
+	DueDate              *time.Time `json:"dueDate,omitempty"`
+	CompletedAt          *time.Time `json:"completedAt,omitempty"`
+	CreatedAt            time.Time  `json:"createdAt"`
+	UpdatedAt            time.Time  `json:"updatedAt"`
 }
 
 // BringItem represents something a member should bring to the event.

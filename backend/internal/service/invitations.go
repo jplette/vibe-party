@@ -18,6 +18,7 @@ type InvitationService struct {
 	invRepo   invitationRepository
 	eventRepo eventRepository
 	userRepo  userRepository
+	todoRepo  todoRepository
 	emailSvc  emailSender
 }
 
@@ -26,12 +27,14 @@ func NewInvitationService(
 	invRepo *repository.InvitationRepository,
 	eventRepo *repository.EventRepository,
 	userRepo *repository.UserRepository,
+	todoRepo *repository.TodoRepository,
 	emailSvc *email.Service,
 ) *InvitationService {
 	return &InvitationService{
 		invRepo:   invRepo,
 		eventRepo: eventRepo,
 		userRepo:  userRepo,
+		todoRepo:  todoRepo,
 		emailSvc:  emailSvc,
 	}
 }
@@ -151,6 +154,7 @@ func (s *InvitationService) AcceptInvitation(ctx context.Context, token string) 
 	if err == nil {
 		// Ignore add-member error: ON CONFLICT DO NOTHING covers duplicates.
 		_ = s.eventRepo.AddMember(ctx, inv.EventID, user.ID, "member")
+		_ = s.todoRepo.TransferInvitationAssignment(ctx, inv.ID, user.ID)
 	}
 
 	return inv, nil
@@ -166,6 +170,7 @@ func (s *InvitationService) ClaimForUser(ctx context.Context, userID uuid.UUID, 
 	for _, inv := range invs {
 		// ON CONFLICT DO NOTHING — safe to call even if already a member.
 		_ = s.eventRepo.AddMember(ctx, inv.EventID, userID, "member")
+		_ = s.todoRepo.TransferInvitationAssignment(ctx, inv.ID, userID)
 	}
 	return nil
 }
