@@ -93,7 +93,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/invitation/accept',
+    path: '/invitations/accept',
     element: (
       <SuspenseWrap>
         <InvitationAcceptPage />
@@ -101,7 +101,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/invitation/decline',
+    path: '/invitations/decline',
     element: (
       <SuspenseWrap>
         <InvitationDeclinePage />
