@@ -14,11 +14,12 @@ import (
 type ItemService struct {
 	itemRepo  itemRepository
 	eventRepo eventRepository
+	invRepo   invitationRepository
 }
 
 // NewItemService creates a new ItemService.
-func NewItemService(itemRepo *repository.ItemRepository, eventRepo *repository.EventRepository) *ItemService {
-	return &ItemService{itemRepo: itemRepo, eventRepo: eventRepo}
+func NewItemService(itemRepo *repository.ItemRepository, eventRepo *repository.EventRepository, invRepo *repository.InvitationRepository) *ItemService {
+	return &ItemService{itemRepo: itemRepo, eventRepo: eventRepo, invRepo: invRepo}
 }
 
 // ListItems returns all bring items for an event, requiring membership.
@@ -82,6 +83,24 @@ func (s *ItemService) AssignItem(ctx context.Context, eventID, itemID, callerID 
 		return nil, fmt.Errorf("assign item: %w", err)
 	}
 	return item, nil
+}
+
+// AssignItemToInvitation assigns a bring item to a pending or accepted invitation.
+func (s *ItemService) AssignItemToInvitation(ctx context.Context, eventID, itemID, callerID, invitationID uuid.UUID) (*model.BringItem, error) {
+	if err := s.requireMembership(ctx, eventID, callerID); err != nil {
+		return nil, err
+	}
+	inv, err := s.invRepo.GetByID(ctx, invitationID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: invitation not found", ErrNotFound)
+	}
+	if inv.EventID != eventID {
+		return nil, fmt.Errorf("%w: invitation does not belong to this event", ErrForbidden)
+	}
+	if inv.Status != "pending" && inv.Status != "accepted" {
+		return nil, fmt.Errorf("%w: invitation must be pending or accepted", ErrInvalidInput)
+	}
+	return s.itemRepo.AssignToInvitation(ctx, itemID, eventID, invitationID)
 }
 
 // ToggleFulfill toggles the fulfillment status of a bring item, requiring membership.

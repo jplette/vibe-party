@@ -177,6 +177,27 @@ func (h *EventHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, members)
 }
 
+// ListGuests handles GET /events/:id/guests.
+func (h *EventHandler) ListGuests(w http.ResponseWriter, r *http.Request) {
+	user, ok := RequireUser(w, r)
+	if !ok {
+		return
+	}
+
+	eventID, err := parseUUIDParam(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	guests, err := h.eventSvc.ListGuests(r.Context(), eventID, user.ID)
+	if HandleServiceError(w, err) {
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, guests)
+}
+
 // parseUUIDParam extracts and parses a UUID from a Chi URL parameter.
 func parseUUIDParam(r *http.Request, param string) (uuid.UUID, error) {
 	return uuid.Parse(chi.URLParam(r, param))

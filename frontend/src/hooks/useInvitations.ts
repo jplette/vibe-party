@@ -5,12 +5,13 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { invitationsApi } from '../api/invitations';
-import type { Invitation, InvitationFormValues, EventMember } from '../types';
+import type { Invitation, InvitationFormValues, EventMember, EventGuest } from '../types';
 
 export const invitationKeys = {
   all: ['invitations'] as const,
   byEvent: (eventId: string) => [...invitationKeys.all, 'event', eventId] as const,
   members: (eventId: string) => ['members', 'event', eventId] as const,
+  guests: (eventId: string) => ['guests', 'event', eventId] as const,
 };
 
 export function useInvitations(eventId: string): UseQueryResult<Invitation[]> {
@@ -48,6 +49,15 @@ export function useCancelInvitation(eventId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invitationKeys.byEvent(eventId) });
     },
+  });
+}
+
+export function useEventGuests(eventId: string): UseQueryResult<EventGuest[]> {
+  return useQuery({
+    queryKey: invitationKeys.guests(eventId),
+    queryFn: () => invitationsApi.listGuests(eventId),
+    enabled: !!eventId,
+    staleTime: 0,
   });
 }
 

@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Invitation, InvitationFormValues, EventMember } from '../types';
+import type { Invitation, InvitationFormValues, EventMember, EventGuest } from '../types';
 
 export const invitationsApi = {
   listForEvent: (eventId: string): Promise<Invitation[]> =>
@@ -22,4 +22,6 @@ export const invitationsApi = {
     role: 'admin' | 'member'
   ): Promise<EventMember> =>
     apiClient.put(`events/${eventId}/members/${userId}`, { json: { role } }).json<EventMember>(),
+  listGuests: (eventId: string): Promise<EventGuest[]> =>
+    apiClient.get(`events/${eventId}/guests`).json<EventGuest[]>(),
 };

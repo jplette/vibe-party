@@ -84,8 +84,8 @@ func main() {
 	userSvc := service.NewUserService(userRepo, eventRepo)
 	eventSvc := service.NewEventService(eventRepo)
 	todoSvc := service.NewTodoService(todoRepo, eventRepo, invRepo, userRepo, emailSvc)
-	itemSvc := service.NewItemService(itemRepo, eventRepo)
-	invSvc := service.NewInvitationService(invRepo, eventRepo, userRepo, todoRepo, emailSvc)
+	itemSvc := service.NewItemService(itemRepo, eventRepo, invRepo)
+	invSvc := service.NewInvitationService(invRepo, eventRepo, userRepo, todoRepo, itemRepo, emailSvc)
 
 	// Wire up handlers.
 	healthHandler := handler.NewHealthHandler(db, redisClient)
@@ -139,6 +139,7 @@ func main() {
 
 			// Members (nested under events).
 			r.Get("/events/{id}/members", eventHandler.ListMembers)
+			r.Get("/events/{id}/guests", eventHandler.ListGuests)
 
 			// Todos (nested under events).
 			r.Get("/events/{id}/todos", todoHandler.ListTodos)

@@ -83,8 +83,9 @@ type BringItem struct {
 	EventID     uuid.UUID  `json:"eventId"`
 	Name        string     `json:"name"`
 	Quantity    *string    `json:"quantity,omitempty"`
-	AssignedTo  *uuid.UUID `json:"assignedTo,omitempty"`
-	FulfilledAt *time.Time `json:"fulfilledAt,omitempty"`
+	AssignedTo           *uuid.UUID `json:"assignedTo,omitempty"`
+	AssignedInvitationID *uuid.UUID `json:"assignedInvitationId,omitempty"`
+	FulfilledAt          *time.Time `json:"fulfilledAt,omitempty"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
 }
@@ -123,6 +124,17 @@ func (inv *Invitation) ToResponse() InvitationResponse {
 		CreatedAt: inv.CreatedAt,
 		UpdatedAt: inv.UpdatedAt,
 	}
+}
+
+// EventGuest represents a person associated with an event — either a registered
+// member or an accepted invitation-only guest (no Keycloak account).
+type EventGuest struct {
+	Kind         string     `json:"kind"`                   // "member" or "invitation"
+	UserID       *uuid.UUID `json:"userId,omitempty"`
+	InvitationID *uuid.UUID `json:"invitationId,omitempty"`
+	Email        string     `json:"email"`
+	Name         string     `json:"name"`
+	Role         string     `json:"role"`
 }
 
 // ContextKey is a typed key for context values to avoid collisions.

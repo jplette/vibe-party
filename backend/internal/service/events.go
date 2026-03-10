@@ -115,6 +115,14 @@ func (s *EventService) ListMembers(ctx context.Context, eventID, userID uuid.UUI
 	return members, nil
 }
 
+// ListGuests returns all guests (members and accepted invitation-only guests) for an event.
+func (s *EventService) ListGuests(ctx context.Context, eventID, userID uuid.UUID) ([]model.EventGuest, error) {
+	if _, err := s.RequireMember(ctx, eventID, userID); err != nil {
+		return nil, err
+	}
+	return s.eventRepo.ListGuests(ctx, eventID)
+}
+
 // RequireMember verifies the user is a member of the event. Returns the role.
 func (s *EventService) RequireMember(ctx context.Context, eventID, userID uuid.UUID) (string, error) {
 	role, err := s.eventRepo.GetMemberRole(ctx, eventID, userID)
