@@ -256,10 +256,10 @@ export function EventDetailPage() {
                 />
                 <Box>
                   <Text size="1" color="gray" style={{ display: 'block' }}>
-                    Members
+                    Guests
                   </Text>
                   <Text size="2" weight="medium">
-                    {members.length}
+                    {guests?.length ?? 0}
                   </Text>
                 </Box>
               </Flex>
