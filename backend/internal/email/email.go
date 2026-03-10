@@ -76,6 +76,7 @@ func (s *Service) SendTodoAssignment(recipientEmail, eventName, todoTitle string
 // SendInvitation sends an HTML invitation email to the recipient.
 func (s *Service) SendInvitation(recipientEmail, eventName, token string) error {
 	acceptURL := fmt.Sprintf("%s/invitations/accept?token=%s", s.frontendURL, token)
+	declineURL := fmt.Sprintf("%s/invitations/decline?token=%s", s.frontendURL, token)
 
 	subject := fmt.Sprintf("You're invited to %s on Vibe Party!", eventName)
 	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
@@ -84,26 +85,38 @@ func (s *Service) SendInvitation(recipientEmail, eventName, token string) error 
 <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <h1 style="color: #ff6b35;">You've been invited!</h1>
   <p>You've been invited to join the event: <strong>%s</strong></p>
-  <p>Click the button below to accept your invitation:</p>
-  <a href="%s" style="
-    display: inline-block;
-    background-color: #ff6b35;
-    color: white;
-    padding: 12px 24px;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: bold;
-    margin: 16px 0;
-  ">Accept Invitation</a>
+  <p>Click the button below to accept or decline your invitation:</p>
+  <div style="margin: 16px 0;">
+    <a href="%s" style="
+      display: inline-block;
+      background-color: #ff6b35;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-right: 12px;
+    ">Accept Invitation</a>
+    <a href="%s" style="
+      display: inline-block;
+      background-color: #6b7280;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    ">Decline</a>
+  </div>
   <p style="color: #6b7280; font-size: 14px;">
-    Or copy this link: <a href="%s">%s</a>
+    Or copy the accept link: <a href="%s">%s</a><br>
+    Or copy the decline link: <a href="%s">%s</a>
   </p>
   <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #9ca3af; font-size: 12px;">
     If you did not expect this invitation, you can safely ignore this email.
   </p>
 </body>
-</html>`, eventName, acceptURL, acceptURL, acceptURL)
+</html>`, eventName, acceptURL, declineURL, acceptURL, acceptURL, declineURL, declineURL)
 
 	// Build MIME message
 	var msg strings.Builder
