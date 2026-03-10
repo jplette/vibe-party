@@ -226,7 +226,7 @@ func TestTodoService_AssignTodo(t *testing.T) {
 			memberEventRepo(),
 		)
 
-		got, err := svc.AssignTodo(context.Background(), eventID, todoID, callerID, &assigneeID)
+		got, err := svc.AssignTodoToUser(context.Background(), eventID, todoID, callerID, &assigneeID)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -249,7 +249,7 @@ func TestTodoService_AssignTodo(t *testing.T) {
 			memberEventRepo(),
 		)
 
-		got, err := svc.AssignTodo(context.Background(), eventID, todoID, callerID, nil)
+		got, err := svc.AssignTodoToUser(context.Background(), eventID, todoID, callerID, nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -261,7 +261,7 @@ func TestTodoService_AssignTodo(t *testing.T) {
 	t.Run("returns ErrForbidden when not a member", func(t *testing.T) {
 		svc := newTestTodoService(&mockTodoRepo{}, nonMemberEventRepo())
 
-		_, err := svc.AssignTodo(context.Background(), eventID, todoID, uuid.New(), &assigneeID)
+		_, err := svc.AssignTodoToUser(context.Background(), eventID, todoID, uuid.New(), &assigneeID)
 		if !errors.Is(err, ErrForbidden) {
 			t.Errorf("got %v; want ErrForbidden", err)
 		}
@@ -276,7 +276,7 @@ func TestTodoService_ToggleComplete(t *testing.T) {
 	userID := uuid.New()
 	now := time.Now()
 
-	t.Run("toggles todo to complete", func(t *testing.T) {
+	t.Run("toggles todo to complete when caller is admin", func(t *testing.T) {
 		want := newTodo("Decorate", eventID)
 		want.CompletedAt = &now
 		svc := newTestTodoService(
@@ -285,6 +285,38 @@ func TestTodoService_ToggleComplete(t *testing.T) {
 					if tid != todoID || eid != eventID {
 						t.Error("wrong IDs")
 					}
+					return want, nil
+				},
+			},
+			// admin bypasses the assignee check, so no GetByID stub needed
+			&mockEventRepo{
+				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+					return "admin", nil
+				},
+			},
+		)
+
+		got, err := svc.ToggleComplete(context.Background(), eventID, todoID, userID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.CompletedAt == nil {
+			t.Error("expected CompletedAt to be set")
+		}
+	})
+
+	t.Run("toggles todo to complete when caller is the assigned member", func(t *testing.T) {
+		want := newTodo("Decorate", eventID)
+		want.AssignedTo = &userID
+		want.CompletedAt = &now
+		svc := newTestTodoService(
+			&mockTodoRepo{
+				GetByIDFn: func(_ context.Context, _, _ uuid.UUID) (*model.Todo, error) {
+					existing := newTodo("Decorate", eventID)
+					existing.AssignedTo = &userID
+					return existing, nil
+				},
+				ToggleCompleteFn: func(_ context.Context, _, _ uuid.UUID) (*model.Todo, error) {
 					return want, nil
 				},
 			},
@@ -300,6 +332,25 @@ func TestTodoService_ToggleComplete(t *testing.T) {
 		}
 	})
 
+	t.Run("returns ErrForbidden when member is not the assignee", func(t *testing.T) {
+		otherUserID := uuid.New()
+		svc := newTestTodoService(
+			&mockTodoRepo{
+				GetByIDFn: func(_ context.Context, _, _ uuid.UUID) (*model.Todo, error) {
+					existing := newTodo("Decorate", eventID)
+					existing.AssignedTo = &otherUserID
+					return existing, nil
+				},
+			},
+			memberEventRepo(),
+		)
+
+		_, err := svc.ToggleComplete(context.Background(), eventID, todoID, userID)
+		if !errors.Is(err, ErrForbidden) {
+			t.Errorf("got %v; want ErrForbidden", err)
+		}
+	})
+
 	t.Run("returns ErrNotFound when todo does not exist", func(t *testing.T) {
 		svc := newTestTodoService(
 			&mockTodoRepo{
@@ -307,7 +358,12 @@ func TestTodoService_ToggleComplete(t *testing.T) {
 					return nil, repository.ErrNotFound
 				},
 			},
-			memberEventRepo(),
+			// use admin so we skip the GetByID check and go straight to ToggleComplete
+			&mockEventRepo{
+				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+					return "admin", nil
+				},
+			},
 		)
 
 		_, err := svc.ToggleComplete(context.Background(), eventID, todoID, userID)

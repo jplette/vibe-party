@@ -43,19 +43,22 @@ func NewInvitationService(
 }
 
 // SendInvitation creates an invitation record and sends an email.
-// Requires the caller to be a member of the event.
+// Requires the caller to be an admin of the event.
 func (s *InvitationService) SendInvitation(ctx context.Context, eventID, callerID uuid.UUID, recipientEmail string) (*model.Invitation, error) {
 	if recipientEmail == "" {
 		return nil, fmt.Errorf("%w: email is required", ErrInvalidInput)
 	}
 
-	// Verify caller is a member.
-	_, err := s.eventRepo.GetMemberRole(ctx, eventID, callerID)
+	// Verify caller is an admin.
+	role, err := s.eventRepo.GetMemberRole(ctx, eventID, callerID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrForbidden
 		}
 		return nil, fmt.Errorf("check membership: %w", err)
+	}
+	if role != "admin" {
+		return nil, ErrForbidden
 	}
 
 	// Verify the event exists.
@@ -88,14 +91,17 @@ func (s *InvitationService) SendInvitation(ctx context.Context, eventID, callerI
 	return inv, nil
 }
 
-// ListInvitations returns all invitations for an event, requiring membership.
+// ListInvitations returns all invitations for an event, requiring admin role.
 func (s *InvitationService) ListInvitations(ctx context.Context, eventID, userID uuid.UUID) ([]model.Invitation, error) {
-	_, err := s.eventRepo.GetMemberRole(ctx, eventID, userID)
+	role, err := s.eventRepo.GetMemberRole(ctx, eventID, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrForbidden
 		}
 		return nil, fmt.Errorf("check membership: %w", err)
+	}
+	if role != "admin" {
+		return nil, ErrForbidden
 	}
 
 	invs, err := s.invRepo.ListByEventID(ctx, eventID)

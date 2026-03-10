@@ -389,6 +389,82 @@ func TestEventService_ListMembers(t *testing.T) {
 	})
 }
 
+// ---- ListGuests ----
+
+func TestEventService_ListGuests(t *testing.T) {
+	eventID := uuid.New()
+	adminID := uuid.New()
+	memberID := uuid.New()
+
+	t.Run("returns guests when caller is admin", func(t *testing.T) {
+		wantGuests := []model.EventGuest{
+			{Kind: "member", Email: "alice@example.com", Name: "Alice", Role: "admin"},
+		}
+		svc := newTestEventService(&mockEventRepo{
+			GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+				return "admin", nil
+			},
+			ListGuestsFn: func(_ context.Context, id uuid.UUID) ([]model.EventGuest, error) {
+				if id != eventID {
+					t.Errorf("wrong eventID %v", id)
+				}
+				return wantGuests, nil
+			},
+		})
+
+		got, err := svc.ListGuests(context.Background(), eventID, adminID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(got) != 1 {
+			t.Errorf("expected 1 guest, got %d", len(got))
+		}
+	})
+
+	t.Run("returns ErrForbidden when caller is a plain member", func(t *testing.T) {
+		svc := newTestEventService(&mockEventRepo{
+			GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+				return "member", nil
+			},
+		})
+
+		_, err := svc.ListGuests(context.Background(), eventID, memberID)
+		if !errors.Is(err, ErrForbidden) {
+			t.Errorf("got %v; want ErrForbidden", err)
+		}
+	})
+
+	t.Run("returns ErrForbidden when caller is not a member", func(t *testing.T) {
+		svc := newTestEventService(&mockEventRepo{
+			GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+				return "", repository.ErrNotFound
+			},
+		})
+
+		_, err := svc.ListGuests(context.Background(), eventID, uuid.New())
+		if !errors.Is(err, ErrForbidden) {
+			t.Errorf("got %v; want ErrForbidden", err)
+		}
+	})
+
+	t.Run("propagates repo error from ListGuests", func(t *testing.T) {
+		repoErr := errors.New("db failure")
+		svc := newTestEventService(&mockEventRepo{
+			GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+				return "admin", nil
+			},
+			ListGuestsFn: func(_ context.Context, _ uuid.UUID) ([]model.EventGuest, error) {
+				return nil, repoErr
+			},
+		})
+
+		_, err := svc.ListGuests(context.Background(), eventID, adminID)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
 // ---- RequireMember ----
 
 func TestEventService_RequireMember(t *testing.T) {

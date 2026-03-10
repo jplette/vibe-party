@@ -32,7 +32,7 @@ func TestInvitationService_SendInvitation(t *testing.T) {
 	event := newEvent("Garden Party")
 	event.ID = eventID
 
-	t.Run("sends invitation when caller is a member", func(t *testing.T) {
+	t.Run("sends invitation when caller is an admin", func(t *testing.T) {
 		inv := newInvitation("pending", "guest@example.com", eventID)
 		emailCh := make(chan struct{}, 1)
 
@@ -44,7 +44,7 @@ func TestInvitationService_SendInvitation(t *testing.T) {
 			},
 			&mockEventRepo{
 				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
-					return "member", nil
+					return "admin", nil
 				},
 				GetByIDFn: func(_ context.Context, _ uuid.UUID) (*model.Event, error) {
 					return event, nil
@@ -73,6 +73,24 @@ func TestInvitationService_SendInvitation(t *testing.T) {
 			// email was sent
 		case <-time.After(100 * time.Millisecond):
 			t.Error("expected email to be sent within 100ms")
+		}
+	})
+
+	t.Run("returns ErrForbidden when caller is a plain member", func(t *testing.T) {
+		svc := newTestInvitationService(
+			&mockInvRepo{},
+			&mockEventRepo{
+				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+					return "member", nil
+				},
+			},
+			&mockUserRepo{},
+			&mockEmailSender{},
+		)
+
+		_, err := svc.SendInvitation(context.Background(), eventID, callerID, "guest@example.com")
+		if !errors.Is(err, ErrForbidden) {
+			t.Errorf("got %v; want ErrForbidden", err)
 		}
 	})
 
@@ -113,7 +131,7 @@ func TestInvitationService_SendInvitation(t *testing.T) {
 			&mockInvRepo{},
 			&mockEventRepo{
 				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
-					return "member", nil
+					return "admin", nil
 				},
 				GetByIDFn: func(_ context.Context, _ uuid.UUID) (*model.Event, error) {
 					return nil, repository.ErrNotFound
@@ -136,7 +154,7 @@ func TestInvitationService_ListInvitations(t *testing.T) {
 	eventID := uuid.New()
 	userID := uuid.New()
 
-	t.Run("returns invitations when user is member", func(t *testing.T) {
+	t.Run("returns invitations when user is admin", func(t *testing.T) {
 		want := []model.Invitation{*newInvitation("pending", "a@b.com", eventID)}
 		svc := newTestInvitationService(
 			&mockInvRepo{
@@ -149,7 +167,7 @@ func TestInvitationService_ListInvitations(t *testing.T) {
 			},
 			&mockEventRepo{
 				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
-					return "member", nil
+					return "admin", nil
 				},
 			},
 			&mockUserRepo{},
@@ -162,6 +180,24 @@ func TestInvitationService_ListInvitations(t *testing.T) {
 		}
 		if len(got) != 1 {
 			t.Errorf("expected 1 invitation, got %d", len(got))
+		}
+	})
+
+	t.Run("returns ErrForbidden when user is a plain member", func(t *testing.T) {
+		svc := newTestInvitationService(
+			&mockInvRepo{},
+			&mockEventRepo{
+				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
+					return "member", nil
+				},
+			},
+			&mockUserRepo{},
+			&mockEmailSender{},
+		)
+
+		_, err := svc.ListInvitations(context.Background(), eventID, userID)
+		if !errors.Is(err, ErrForbidden) {
+			t.Errorf("got %v; want ErrForbidden", err)
 		}
 	})
 
@@ -188,7 +224,7 @@ func TestInvitationService_ListInvitations(t *testing.T) {
 			},
 			&mockEventRepo{
 				GetMemberRoleFn: func(_ context.Context, _, _ uuid.UUID) (string, error) {
-					return "member", nil
+					return "admin", nil
 				},
 			},
 			&mockUserRepo{},

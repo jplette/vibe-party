@@ -116,8 +116,9 @@ func (s *EventService) ListMembers(ctx context.Context, eventID, userID uuid.UUI
 }
 
 // ListGuests returns all guests (members and accepted invitation-only guests) for an event.
+// Requires the caller to be an admin of the event.
 func (s *EventService) ListGuests(ctx context.Context, eventID, userID uuid.UUID) ([]model.EventGuest, error) {
-	if _, err := s.RequireMember(ctx, eventID, userID); err != nil {
+	if err := s.requireAdmin(ctx, eventID, userID); err != nil {
 		return nil, err
 	}
 	return s.eventRepo.ListGuests(ctx, eventID)
