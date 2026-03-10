@@ -9,10 +9,12 @@ import {
   Spinner,
   Callout,
 } from '@radix-ui/themes';
-import { TrashIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import { useItems, useToggleItem, useDeleteItem } from '../../hooks/useItems';
+import { TrashIcon, ExclamationTriangleIcon, PersonIcon } from '@radix-ui/react-icons';
+import { useItems, useToggleItem, useDeleteItem, useAssignItem } from '../../hooks/useItems';
+import { useEventMembers, useInvitations } from '../../hooks/useInvitations';
 import { BringItemForm } from './BringItemForm';
-import type { BringItem } from '../../types';
+import { ItemContextMenu } from './ItemContextMenu';
+import type { AssigneeOption, BringItem, EventMember, Invitation } from '../../types';
 
 interface BringItemListProps {
   eventId: string;
@@ -20,55 +22,112 @@ interface BringItemListProps {
 
 interface ItemRowProps {
   item: BringItem;
+  members: EventMember[];
+  invitations: Invitation[];
+  assigneeOptions: AssigneeOption[];
   onToggle: () => void;
   onDelete: () => void;
+  onAssign: (assignedTo: string | null, assignedInvitationId: string | null) => void;
 }
 
-function ItemRow({ item, onToggle, onDelete }: ItemRowProps) {
+function ItemRow({
+  item,
+  members,
+  invitations,
+  assigneeOptions,
+  onToggle,
+  onDelete,
+  onAssign,
+}: ItemRowProps) {
   const fulfilled = !!item.fulfilledAt;
+
+  const resolvedAssigneeName = item.assignedTo
+    ? (members.find((m) => m.userId === item.assignedTo)?.user?.name ?? item.assignedTo)
+    : undefined;
+
+  const assignedInviteeEmail = item.assignedInvitationId
+    ? (invitations.find((inv) => inv.id === item.assignedInvitationId)?.email ?? undefined)
+    : undefined;
+
   return (
-    <Flex align="center" gap="3" py="2">
-      <Checkbox
-        checked={fulfilled}
-        onCheckedChange={onToggle}
-        aria-label={fulfilled ? 'Mark needed' : 'Mark brought'}
-      />
-      <Text
-        size="2"
-        style={{
-          flex: 1,
-          textDecoration: fulfilled ? 'line-through' : 'none',
-          color: fulfilled ? 'var(--gray-9)' : undefined,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {item.name}
-      </Text>
-      {item.quantity && (
-        <Badge variant="surface" size="1" style={{ flexShrink: 0 }}>
-          {item.quantity}
-        </Badge>
-      )}
-      <IconButton
-        variant="ghost"
-        color="red"
-        size="1"
-        onClick={onDelete}
-        aria-label="Delete item"
-        style={{ flexShrink: 0 }}
-      >
-        <TrashIcon />
-      </IconButton>
-    </Flex>
+    <ItemContextMenu item={item} assigneeOptions={assigneeOptions} onAssign={onAssign}>
+      <Flex align="center" gap="3" py="2" style={{ cursor: 'context-menu' }}>
+        <Checkbox
+          checked={fulfilled}
+          onCheckedChange={onToggle}
+          aria-label={fulfilled ? 'Mark needed' : 'Mark brought'}
+          onClick={(e) => e.stopPropagation()}
+        />
+        <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
+          <Text
+            size="2"
+            style={{
+              textDecoration: fulfilled ? 'line-through' : 'none',
+              color: fulfilled ? 'var(--gray-9)' : undefined,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+            }}
+          >
+            {item.name}
+          </Text>
+          {item.quantity && (
+            <Badge variant="surface" size="1" style={{ flexShrink: 0 }}>
+              {item.quantity}
+            </Badge>
+          )}
+          {resolvedAssigneeName && (
+            <Badge variant="outline" size="1" color="orange" style={{ flexShrink: 0 }}>
+              <PersonIcon />
+              {resolvedAssigneeName}
+            </Badge>
+          )}
+          {!resolvedAssigneeName && assignedInviteeEmail && (
+            <Badge variant="outline" size="1" color="amber" style={{ flexShrink: 0 }}>
+              <PersonIcon />
+              {assignedInviteeEmail}
+            </Badge>
+          )}
+        </Flex>
+        <IconButton
+          variant="ghost"
+          color="red"
+          size="1"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          aria-label="Delete item"
+          style={{ flexShrink: 0 }}
+        >
+          <TrashIcon />
+        </IconButton>
+      </Flex>
+    </ItemContextMenu>
   );
 }
 
 export function BringItemList({ eventId }: BringItemListProps) {
   const { data: items, isLoading, isError, error } = useItems(eventId);
+  const { data: members = [] } = useEventMembers(eventId);
+  const { data: invitations = [] } = useInvitations(eventId);
   const toggleItem = useToggleItem(eventId);
   const deleteItem = useDeleteItem(eventId);
+  const assignItem = useAssignItem(eventId);
+
+  const assigneeOptions: AssigneeOption[] = [
+    ...members.map((m): AssigneeOption => ({
+      kind: 'member',
+      userId: m.userId,
+      name: m.user?.name ?? m.userId,
+      email: m.user?.email ?? '',
+    })),
+    ...invitations
+      .filter((inv) => inv.status === 'pending' || inv.status === 'accepted')
+      .map((inv): AssigneeOption => ({
+        kind: 'invitation',
+        invitationId: inv.id,
+        email: inv.email,
+      })),
+  ];
 
   if (isLoading) {
     return (
@@ -119,8 +178,14 @@ export function BringItemList({ eventId }: BringItemListProps) {
           <ItemRow
             key={item.id}
             item={item}
+            members={members}
+            invitations={invitations}
+            assigneeOptions={assigneeOptions}
             onToggle={() => toggleItem.mutate({ itemId: item.id, fulfilled: !!item.fulfilledAt })}
             onDelete={() => deleteItem.mutate(item.id)}
+            onAssign={(assignedTo, assignedInvitationId) =>
+              assignItem.mutate({ itemId: item.id, assignedTo, assignedInvitationId })
+            }
           />
         ))
       )}
@@ -141,8 +206,14 @@ export function BringItemList({ eventId }: BringItemListProps) {
           <ItemRow
             key={item.id}
             item={item}
+            members={members}
+            invitations={invitations}
+            assigneeOptions={assigneeOptions}
             onToggle={() => toggleItem.mutate({ itemId: item.id, fulfilled: !!item.fulfilledAt })}
             onDelete={() => deleteItem.mutate(item.id)}
+            onAssign={(assignedTo, assignedInvitationId) =>
+              assignItem.mutate({ itemId: item.id, assignedTo, assignedInvitationId })
+            }
           />
         ))
       )}

@@ -21,6 +21,7 @@ type eventRepository interface {
 	AddMember(ctx context.Context, eventID, userID uuid.UUID, role string) error
 	ListMembers(ctx context.Context, eventID uuid.UUID) ([]model.EventMemberWithUser, error)
 	SharesEventMembership(ctx context.Context, userAID, userBID uuid.UUID) (bool, error)
+	ListGuests(ctx context.Context, eventID uuid.UUID) ([]model.EventGuest, error)
 }
 
 // todoRepository is the subset of repository.TodoRepository used by TodoService.
@@ -43,6 +44,8 @@ type itemRepository interface {
 	Create(ctx context.Context, eventID uuid.UUID, name, quantity string) (*model.BringItem, error)
 	Update(ctx context.Context, itemID, eventID uuid.UUID, name, quantity string) (*model.BringItem, error)
 	Assign(ctx context.Context, itemID, eventID uuid.UUID, assigneeID *uuid.UUID) (*model.BringItem, error)
+	AssignToInvitation(ctx context.Context, itemID, eventID, invitationID uuid.UUID) (*model.BringItem, error)
+	TransferInvitationAssignment(ctx context.Context, invitationID, userID uuid.UUID) error
 	ToggleFulfill(ctx context.Context, itemID, eventID uuid.UUID) (*model.BringItem, error)
 	Delete(ctx context.Context, itemID, eventID uuid.UUID) error
 }

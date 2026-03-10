@@ -28,7 +28,8 @@ type updateItemRequest struct {
 }
 
 type assignItemRequest struct {
-	AssignedTo *string `json:"assigned_to"`
+	AssignedTo           *string `json:"assigned_to"`
+	AssignedInvitationId *string `json:"assignedInvitationId"`
 }
 
 // ListItems handles GET /events/:id/items.
@@ -130,6 +131,25 @@ func (h *ItemHandler) AssignItem(w http.ResponseWriter, r *http.Request) {
 
 	var req assignItemRequest
 	if !DecodeJSON(w, r, &req) {
+		return
+	}
+
+	if req.AssignedTo != nil && req.AssignedInvitationId != nil {
+		RespondError(w, http.StatusBadRequest, "cannot set both assigned_to and assignedInvitationId")
+		return
+	}
+
+	if req.AssignedInvitationId != nil {
+		invitationID, parseErr := uuid.Parse(*req.AssignedInvitationId)
+		if parseErr != nil {
+			RespondError(w, http.StatusBadRequest, "invalid assignedInvitationId uuid")
+			return
+		}
+		item, err := h.itemSvc.AssignItemToInvitation(r.Context(), eventID, itemID, user.ID, invitationID)
+		if HandleServiceError(w, err) {
+			return
+		}
+		RespondJSON(w, http.StatusOK, item)
 		return
 	}
 

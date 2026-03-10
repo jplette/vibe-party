@@ -144,8 +144,8 @@ func (s *TodoService) AssignTodoToInvitation(ctx context.Context, eventID, todoI
 		return nil, fmt.Errorf("%w: invitation does not belong to this event", ErrInvalidInput)
 	}
 
-	if inv.Status != "pending" {
-		return nil, fmt.Errorf("%w: invitation is not pending", ErrInvalidInput)
+	if inv.Status != "pending" && inv.Status != "accepted" {
+		return nil, fmt.Errorf("%w: invitation must be pending or accepted", ErrInvalidInput)
 	}
 
 	todo, err := s.todoRepo.AssignToInvitation(ctx, todoID, eventID, invitationID)

@@ -14,4 +14,10 @@ export const itemsApi = {
     apiClient.post(`events/${eventId}/items/${itemId}/unfulfill`).json<BringItem>(),
   delete: (eventId: string, itemId: string): Promise<void> =>
     apiClient.delete(`events/${eventId}/items/${itemId}`).json<void>(),
+  assign: (
+    eventId: string,
+    itemId: string,
+    body: { assignedTo?: string | null; assignedInvitationId?: string | null }
+  ): Promise<BringItem> =>
+    apiClient.patch(`events/${eventId}/items/${itemId}/assign`, { json: body }).json<BringItem>(),
 };

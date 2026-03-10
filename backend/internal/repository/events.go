@@ -232,6 +232,45 @@ func (r *EventRepository) SharesEventMembership(ctx context.Context, userAID, us
 	return exists, nil
 }
 
+// ListGuests returns all people associated with an event — registered members and
+// accepted invitation-only guests who have not yet created an account.
+func (r *EventRepository) ListGuests(ctx context.Context, eventID uuid.UUID) ([]model.EventGuest, error) {
+	query := `
+		SELECT 'member' as kind, u.id as user_id, NULL::uuid as invitation_id, u.email, u.name, em.role
+		FROM event_members em
+		JOIN users u ON u.id = em.user_id
+		WHERE em.event_id = $1
+		UNION ALL
+		SELECT 'invitation' as kind, NULL::uuid as user_id, i.id as invitation_id, i.email, i.email as name, 'guest' as role
+		FROM invitations i
+		WHERE i.event_id = $1
+		  AND i.status = 'accepted'
+		  AND NOT EXISTS (
+		      SELECT 1 FROM event_members em2
+		      JOIN users u2 ON u2.id = em2.user_id
+		      WHERE em2.event_id = i.event_id AND u2.email = i.email
+		  )
+		ORDER BY kind, name
+	`
+	rows, err := r.db.Query(ctx, query, eventID)
+	if err != nil {
+		return nil, fmt.Errorf("list guests: %w", err)
+	}
+	defer rows.Close()
+	var guests []model.EventGuest
+	for rows.Next() {
+		var g model.EventGuest
+		if err := rows.Scan(&g.Kind, &g.UserID, &g.InvitationID, &g.Email, &g.Name, &g.Role); err != nil {
+			return nil, fmt.Errorf("scan guest: %w", err)
+		}
+		guests = append(guests, g)
+	}
+	if guests == nil {
+		guests = []model.EventGuest{}
+	}
+	return guests, rows.Err()
+}
+
 func scanEvent(row pgx.Row) (*model.Event, error) {
 	e := &model.Event{}
 	err := row.Scan(

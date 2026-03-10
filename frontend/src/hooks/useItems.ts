@@ -76,3 +76,21 @@ export function useDeleteItem(eventId: string) {
     },
   });
 }
+
+export function useAssignItem(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      assignedTo,
+      assignedInvitationId,
+    }: {
+      itemId: string;
+      assignedTo?: string | null;
+      assignedInvitationId?: string | null;
+    }) => itemsApi.assign(eventId, itemId, { assignedTo, assignedInvitationId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: itemKeys.byEvent(eventId) });
+    },
+  });
+}

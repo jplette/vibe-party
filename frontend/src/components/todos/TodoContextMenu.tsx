@@ -55,7 +55,7 @@ export function TodoContextMenu({
                   <Text as="span">{opt.email}</Text>
                   {' '}
                   <Text as="span" size="1" style={{ color: 'var(--amber-11)' }}>
-                    (pending)
+                    {opt.status === 'accepted' ? '(no account)' : '(pending)'}
                   </Text>
                 </ContextMenu.Item>
               );

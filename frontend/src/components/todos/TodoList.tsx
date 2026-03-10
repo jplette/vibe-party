@@ -56,11 +56,12 @@ export function TodoList({ eventId }: TodoListProps) {
       email: m.user?.email ?? '',
     })),
     ...(invitations ?? [])
-      .filter((inv) => inv.status === 'pending')
+      .filter((inv) => inv.status === 'pending' || inv.status === 'accepted')
       .map((inv): AssigneeOption => ({
         kind: 'invitation',
         invitationId: inv.id,
         email: inv.email,
+        status: inv.status,
       })),
   ];
 

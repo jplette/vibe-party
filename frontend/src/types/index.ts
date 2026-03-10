@@ -37,7 +37,7 @@ export interface Todo {
 
 export type AssigneeOption =
   | { kind: 'member'; userId: string; name: string; email: string }
-  | { kind: 'invitation'; invitationId: string; email: string };
+  | { kind: 'invitation'; invitationId: string; email: string; status?: 'pending' | 'accepted' | 'declined' };
 
 export interface BringItem {
   id: string;
@@ -45,7 +45,17 @@ export interface BringItem {
   name: string;
   quantity?: string;
   assignedTo?: string;
+  assignedInvitationId?: string;
   fulfilledAt?: string;
+}
+
+export interface EventGuest {
+  kind: 'member' | 'invitation';
+  userId?: string;
+  invitationId?: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'member' | 'guest';
 }
 
 export interface Invitation {

@@ -29,6 +29,7 @@ import {
   useInvitations,
   useSendInvitation,
   useCancelInvitation,
+  useEventGuests,
 } from '../hooks/useInvitations';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { TodoList } from '../components/todos/TodoList';
@@ -55,6 +56,7 @@ export function EventDetailPage() {
   const { data: event, isLoading, isError } = useEvent(id!);
   const { data: members = [] } = useEventMembers(id!);
   const { data: invitations = [], isLoading: invLoading } = useInvitations(id!);
+  const { data: guests } = useEventGuests(id!);
   const sendInvitation = useSendInvitation(id!);
   const cancelInvitation = useCancelInvitation(id!);
 
@@ -173,7 +175,7 @@ export function EventDetailPage() {
           <Tabs.Trigger value="info">Info</Tabs.Trigger>
           <Tabs.Trigger value="todos">Todos</Tabs.Trigger>
           <Tabs.Trigger value="items">Items</Tabs.Trigger>
-          <Tabs.Trigger value="guests">Guests ({members.length})</Tabs.Trigger>
+          <Tabs.Trigger value="guests">Guests ({guests?.length ?? 0})</Tabs.Trigger>
           {isAdmin && (
             <Tabs.Trigger value="invitations">
               Invitations{pendingCount > 0 ? ` (${pendingCount})` : ''}
@@ -327,56 +329,91 @@ export function EventDetailPage() {
               </Flex>
             )}
 
-            {members.length === 0 ? (
+            {!guests || guests.length === 0 ? (
               <Text color="gray" size="2">
-                No members yet. Invite some friends!
+                No guests yet. Invite some friends!
               </Text>
             ) : (
               <Flex direction="column" gap="3">
-                {members.map((member) => {
-                  const nameParts = member.user?.name?.split(' ').slice(0, 2) ?? [];
-                  const initials =
-                    nameParts.length > 0
-                      ? nameParts.map((n) => n[0]).join('').toUpperCase()
-                      : (member.user?.email?.[0] ?? '?').toUpperCase();
+                {guests.map((guest) => {
+                  if (guest.kind === 'member') {
+                    const nameParts = guest.name.split(' ').slice(0, 2);
+                    const initials =
+                      nameParts.length > 0
+                        ? nameParts.map((n) => n[0]).join('').toUpperCase()
+                        : (guest.email?.[0] ?? '?').toUpperCase();
 
-                  return (
-                    <Flex key={member.userId} align="center" gap="3">
-                      <Avatar
-                        size="2"
-                        fallback={initials}
-                        style={{ backgroundColor: '#ff6b35', color: '#fff', flexShrink: 0 }}
-                      />
-                      <Box style={{ flex: 1, minWidth: 0 }}>
-                        <Text size="2" weight="medium">
-                          {member.user?.name ?? member.user?.email ?? member.userId}
-                          {member.userId === dbUserId && (
-                            <Text color="gray" size="1" ml="1">
-                              (you)
+                    return (
+                      <Flex key={guest.userId} align="center" gap="3">
+                        <Avatar
+                          size="2"
+                          fallback={initials}
+                          style={{ backgroundColor: '#ff6b35', color: '#fff', flexShrink: 0 }}
+                        />
+                        <Box style={{ flex: 1, minWidth: 0 }}>
+                          <Text size="2" weight="medium">
+                            {guest.name || guest.email}
+                            {guest.userId === dbUserId && (
+                              <Text color="gray" size="1" ml="1">
+                                (you)
+                              </Text>
+                            )}
+                          </Text>
+                          {guest.email && guest.name && (
+                            <Text
+                              size="1"
+                              color="gray"
+                              style={{
+                                display: 'block',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {guest.email}
                             </Text>
                           )}
+                        </Box>
+                        <Badge
+                          color={guest.role === 'admin' ? 'orange' : 'gray'}
+                          variant="soft"
+                          style={{ flexShrink: 0 }}
+                        >
+                          {guest.role}
+                        </Badge>
+                      </Flex>
+                    );
+                  }
+
+                  // kind === 'invitation'
+                  const invFallback = (guest.email?.[0] ?? '?').toUpperCase();
+                  return (
+                    <Flex key={guest.invitationId} align="center" gap="3">
+                      <Avatar
+                        size="2"
+                        fallback={invFallback}
+                        style={{ backgroundColor: 'var(--gray-5)', color: 'var(--gray-11)', flexShrink: 0 }}
+                      />
+                      <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Text
+                          size="2"
+                          weight="medium"
+                          style={{
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {guest.email}
                         </Text>
-                        {member.user?.email && member.user.name && (
-                          <Text
-                            size="1"
-                            color="gray"
-                            style={{
-                              display: 'block',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {member.user.email}
-                          </Text>
-                        )}
                       </Box>
                       <Badge
-                        color={member.role === 'admin' ? 'orange' : 'gray'}
+                        color="blue"
                         variant="soft"
                         style={{ flexShrink: 0 }}
                       >
-                        {member.role}
+                        guest
                       </Badge>
                     </Flex>
                   );

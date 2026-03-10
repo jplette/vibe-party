@@ -25,7 +25,7 @@ func NewItemRepository(db *pgxpool.Pool) *ItemRepository {
 // ListByEventID returns all bring items for an event.
 func (r *ItemRepository) ListByEventID(ctx context.Context, eventID uuid.UUID) ([]model.BringItem, error) {
 	const q = `
-		SELECT id, event_id, name, quantity, assigned_to, fulfilled_at, created_at, updated_at
+		SELECT id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
 		FROM bring_items
 		WHERE event_id = $1
 		ORDER BY created_at ASC
@@ -52,7 +52,7 @@ func (r *ItemRepository) Create(ctx context.Context, eventID uuid.UUID, name, qu
 	const q = `
 		INSERT INTO bring_items (event_id, name, quantity)
 		VALUES ($1, $2, $3)
-		RETURNING id, event_id, name, quantity, assigned_to, fulfilled_at, created_at, updated_at
+		RETURNING id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
 	`
 	var qtyPtr *string
 	if quantity != "" {
@@ -69,7 +69,7 @@ func (r *ItemRepository) Create(ctx context.Context, eventID uuid.UUID, name, qu
 // GetByID fetches a bring item by its ID, scoped to an event.
 func (r *ItemRepository) GetByID(ctx context.Context, id, eventID uuid.UUID) (*model.BringItem, error) {
 	const q = `
-		SELECT id, event_id, name, quantity, assigned_to, fulfilled_at, created_at, updated_at
+		SELECT id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
 		FROM bring_items
 		WHERE id = $1 AND event_id = $2
 	`
@@ -92,7 +92,7 @@ func (r *ItemRepository) Update(ctx context.Context, id, eventID uuid.UUID, name
 		    quantity   = $4,
 		    updated_at = NOW()
 		WHERE id = $1 AND event_id = $2
-		RETURNING id, event_id, name, quantity, assigned_to, fulfilled_at, created_at, updated_at
+		RETURNING id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
 	`
 	var qtyPtr *string
 	if quantity != "" {
@@ -109,14 +109,15 @@ func (r *ItemRepository) Update(ctx context.Context, id, eventID uuid.UUID, name
 	return item, nil
 }
 
-// Assign sets the assigned_to field. Pass nil to unassign.
+// Assign sets the assigned_to field. Pass nil to unassign. Also clears assigned_invitation_id.
 func (r *ItemRepository) Assign(ctx context.Context, id, eventID uuid.UUID, assignedTo *uuid.UUID) (*model.BringItem, error) {
 	const q = `
 		UPDATE bring_items
-		SET assigned_to = $3,
-		    updated_at  = NOW()
+		SET assigned_to            = $3,
+		    assigned_invitation_id = NULL,
+		    updated_at             = NOW()
 		WHERE id = $1 AND event_id = $2
-		RETURNING id, event_id, name, quantity, assigned_to, fulfilled_at, created_at, updated_at
+		RETURNING id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
 	`
 	row := r.db.QueryRow(ctx, q, id, eventID, assignedTo)
 	item, err := scanItem(row)
@@ -136,7 +137,7 @@ func (r *ItemRepository) ToggleFulfill(ctx context.Context, id, eventID uuid.UUI
 		SET fulfilled_at = CASE WHEN fulfilled_at IS NULL THEN NOW() ELSE NULL END,
 		    updated_at   = NOW()
 		WHERE id = $1 AND event_id = $2
-		RETURNING id, event_id, name, quantity, assigned_to, fulfilled_at, created_at, updated_at
+		RETURNING id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
 	`
 	row := r.db.QueryRow(ctx, q, id, eventID)
 	item, err := scanItem(row)
@@ -173,6 +174,7 @@ func scanItem(row interface {
 		&item.Name,
 		&item.Quantity,
 		&item.AssignedTo,
+		&item.AssignedInvitationID,
 		&fulfilledAt,
 		&item.CreatedAt,
 		&item.UpdatedAt,
@@ -182,4 +184,41 @@ func scanItem(row interface {
 	}
 	item.FulfilledAt = fulfilledAt
 	return item, nil
+}
+
+// AssignToInvitation sets the assigned_invitation_id field and clears assigned_to.
+func (r *ItemRepository) AssignToInvitation(ctx context.Context, id, eventID, invitationID uuid.UUID) (*model.BringItem, error) {
+	const q = `
+		UPDATE bring_items
+		SET assigned_invitation_id = $3,
+		    assigned_to            = NULL,
+		    updated_at             = NOW()
+		WHERE id = $1 AND event_id = $2
+		RETURNING id, event_id, name, quantity, assigned_to, assigned_invitation_id, fulfilled_at, created_at, updated_at
+	`
+	row := r.db.QueryRow(ctx, q, id, eventID, invitationID)
+	item, err := scanItem(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("assign bring item to invitation: %w", err)
+	}
+	return item, nil
+}
+
+// TransferInvitationAssignment migrates all bring items assigned to an invitation to a user.
+func (r *ItemRepository) TransferInvitationAssignment(ctx context.Context, invitationID, userID uuid.UUID) error {
+	const q = `
+		UPDATE bring_items
+		SET assigned_to            = $2,
+		    assigned_invitation_id = NULL,
+		    updated_at             = NOW()
+		WHERE assigned_invitation_id = $1
+	`
+	_, err := r.db.Exec(ctx, q, invitationID, userID)
+	if err != nil {
+		return fmt.Errorf("transfer invitation assignment: %w", err)
+	}
+	return nil
 }
