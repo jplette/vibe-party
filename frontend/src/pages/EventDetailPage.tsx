@@ -118,7 +118,7 @@ export function EventDetailPage() {
   const duration = event.date ? formatDuration(event.date, event.endDate) : null;
   const subtitle = [dateRange, duration].filter(Boolean).join(' · ') || 'Date TBD';
 
-  const pendingCount = invitations.filter((inv) => inv.status === 'pending').length;
+  const totalInvitationCount = invitations.length;
 
   return (
     <Box>
@@ -178,7 +178,7 @@ export function EventDetailPage() {
           <Tabs.Trigger value="guests">Guests ({guests?.length ?? 0})</Tabs.Trigger>
           {isAdmin && (
             <Tabs.Trigger value="invitations">
-              Invitations{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              Invitations{totalInvitationCount > 0 ? ` (${totalInvitationCount})` : ''}
             </Tabs.Trigger>
           )}
         </Tabs.List>
@@ -256,10 +256,10 @@ export function EventDetailPage() {
                 />
                 <Box>
                   <Text size="1" color="gray" style={{ display: 'block' }}>
-                    Members
+                    Guests
                   </Text>
                   <Text size="2" weight="medium">
-                    {members.length}
+                    {guests?.length ?? 0}
                   </Text>
                 </Box>
               </Flex>
