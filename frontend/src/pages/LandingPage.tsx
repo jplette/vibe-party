@@ -757,7 +757,7 @@ export function LandingPage() {
                     background: 'rgba(255,255,255,0.06)',
                     transition: 'background 0.15s ease',
                   }}
-                  onClick={login}
+                  onClick={() => login()}
                 >
                   Log In
                 </Button>

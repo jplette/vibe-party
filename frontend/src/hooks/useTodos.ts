@@ -34,10 +34,8 @@ export function useCreateTodo(eventId: string) {
 export function useToggleTodo(eventId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ todoId, completed }: { todoId: string; completed: boolean }) =>
-      completed
-        ? todosApi.uncomplete(eventId, todoId)
-        : todosApi.complete(eventId, todoId),
+    mutationFn: ({ todoId }: { todoId: string; completed: boolean }) =>
+      todosApi.toggleComplete(eventId, todoId),
     onMutate: async ({ todoId, completed }) => {
       // Optimistic update
       await queryClient.cancelQueries({ queryKey: todoKeys.byEvent(eventId) });

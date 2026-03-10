@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/authStore';
 
 interface AuthContextValue {
   userManager: UserManager;
-  login: () => Promise<void>;
+  login: (returnTo?: string) => Promise<void>;
   logout: () => Promise<void>;
   silentRenew: () => Promise<void>;
   register: () => Promise<void>;
@@ -109,8 +109,10 @@ function AuthProviderInner({ children }: { children: React.ReactNode }) {
     };
   }, [userManager, setOidcUser, setLoading, clearAuth]);
 
-  const login = async () => {
-    await userManager.signinRedirect();
+  const login = async (returnTo?: string) => {
+    // Pass the intended destination through the OIDC state so CallbackPage can
+    // redirect the user back to the original URL after authentication.
+    await userManager.signinRedirect({ state: returnTo ?? '/' });
   };
 
   const logout = async () => {

@@ -76,7 +76,7 @@ export function LandingNav() {
                 backgroundColor: 'transparent',
                 marginLeft: '8px',
               }}
-              onClick={login}
+              onClick={() => login()}
             >
               Log In
             </Button>
