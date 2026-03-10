@@ -71,3 +71,32 @@ export function useDeleteTodo(eventId: string) {
     },
   });
 }
+
+export function useAssignTodo(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      todoId,
+      assignedTo,
+      assignedInvitationId,
+    }: {
+      todoId: string;
+      assignedTo?: string | null;
+      assignedInvitationId?: string | null;
+    }) => todosApi.assign(eventId, todoId, { assignedTo, assignedInvitationId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: todoKeys.byEvent(eventId) });
+    },
+  });
+}
+
+export function useSetTodoDueDate(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ todoId, dueDate }: { todoId: string; dueDate: string | null }) =>
+      todosApi.setDueDate(eventId, todoId, dueDate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: todoKeys.byEvent(eventId) });
+    },
+  });
+}

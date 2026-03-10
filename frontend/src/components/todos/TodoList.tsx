@@ -10,8 +10,17 @@ import {
   Callout,
 } from '@radix-ui/themes';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import { useTodos, useCreateTodo, useToggleTodo, useDeleteTodo } from '../../hooks/useTodos';
+import {
+  useTodos,
+  useCreateTodo,
+  useToggleTodo,
+  useDeleteTodo,
+  useAssignTodo,
+  useSetTodoDueDate,
+} from '../../hooks/useTodos';
+import { useEventMembers, useInvitations } from '../../hooks/useInvitations';
 import { TodoItem } from './TodoItem';
+import type { AssigneeOption } from '../../types';
 
 interface TodoListProps {
   eventId: string;
@@ -22,9 +31,38 @@ export function TodoList({ eventId }: TodoListProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: todos, isLoading, isError, error } = useTodos(eventId);
+  const { data: members } = useEventMembers(eventId);
+  const { data: invitations } = useInvitations(eventId);
+
   const createTodo = useCreateTodo(eventId);
   const toggleTodo = useToggleTodo(eventId);
   const deleteTodo = useDeleteTodo(eventId);
+  const assignTodo = useAssignTodo(eventId);
+  const setTodoDueDate = useSetTodoDueDate(eventId);
+
+  const memberMap = new Map(
+    (members ?? []).map((m) => [m.userId, m])
+  );
+
+  const invitationMap = new Map(
+    (invitations ?? []).map((inv) => [inv.id, inv])
+  );
+
+  const assigneeOptions: AssigneeOption[] = [
+    ...(members ?? []).map((m): AssigneeOption => ({
+      kind: 'member',
+      userId: m.userId,
+      name: m.user?.name ?? m.userId,
+      email: m.user?.email ?? '',
+    })),
+    ...(invitations ?? [])
+      .filter((inv) => inv.status === 'pending')
+      .map((inv): AssigneeOption => ({
+        kind: 'invitation',
+        invitationId: inv.id,
+        email: inv.email,
+      })),
+  ];
 
   const handleAdd = () => {
     const trimmed = title.trim();
@@ -70,7 +108,6 @@ export function TodoList({ eventId }: TodoListProps) {
 
   return (
     <Box>
-      {/* Add form */}
       <Flex gap="2" mb="4">
         <TextField.Root
           ref={inputRef}
@@ -90,7 +127,6 @@ export function TodoList({ eventId }: TodoListProps) {
         </Button>
       </Flex>
 
-      {/* Pending section */}
       <Text size="1" weight="bold" color="gray" as="p" mb="2">
         PENDING ({pending.length})
       </Text>
@@ -110,13 +146,29 @@ export function TodoList({ eventId }: TodoListProps) {
             todo={todo}
             onToggle={() => toggleTodo.mutate({ todoId: todo.id, completed: !!todo.completedAt })}
             onDelete={() => deleteTodo.mutate(todo.id)}
+            assigneeOptions={assigneeOptions}
+            resolvedAssigneeName={
+              todo.assignedTo
+                ? (memberMap.get(todo.assignedTo)?.user?.name ?? todo.assignedTo)
+                : undefined
+            }
+            assignedInviteeEmail={
+              todo.assignedInvitationId
+                ? (invitationMap.get(todo.assignedInvitationId)?.email ?? undefined)
+                : undefined
+            }
+            onAssign={(assignedTo, assignedInvitationId) =>
+              assignTodo.mutate({ todoId: todo.id, assignedTo, assignedInvitationId })
+            }
+            onSetDueDate={(dueDate) =>
+              setTodoDueDate.mutate({ todoId: todo.id, dueDate })
+            }
           />
         ))
       )}
 
       <Separator my="3" size="4" />
 
-      {/* Done section */}
       <Text size="1" weight="bold" color="gray" as="p" mb="2">
         DONE ({done.length})
       </Text>
@@ -132,6 +184,23 @@ export function TodoList({ eventId }: TodoListProps) {
             todo={todo}
             onToggle={() => toggleTodo.mutate({ todoId: todo.id, completed: !!todo.completedAt })}
             onDelete={() => deleteTodo.mutate(todo.id)}
+            assigneeOptions={assigneeOptions}
+            resolvedAssigneeName={
+              todo.assignedTo
+                ? (memberMap.get(todo.assignedTo)?.user?.name ?? todo.assignedTo)
+                : undefined
+            }
+            assignedInviteeEmail={
+              todo.assignedInvitationId
+                ? (invitationMap.get(todo.assignedInvitationId)?.email ?? undefined)
+                : undefined
+            }
+            onAssign={(assignedTo, assignedInvitationId) =>
+              assignTodo.mutate({ todoId: todo.id, assignedTo, assignedInvitationId })
+            }
+            onSetDueDate={(dueDate) =>
+              setTodoDueDate.mutate({ todoId: todo.id, dueDate })
+            }
           />
         ))
       )}

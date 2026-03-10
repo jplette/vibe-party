@@ -12,4 +12,14 @@ export const todosApi = {
     apiClient.patch(`events/${eventId}/todos/${todoId}/complete`).json<Todo>(),
   delete: (eventId: string, todoId: string): Promise<void> =>
     apiClient.delete(`events/${eventId}/todos/${todoId}`).json<void>(),
+  assign: (
+    eventId: string,
+    todoId: string,
+    body: { assignedTo?: string | null; assignedInvitationId?: string | null }
+  ): Promise<Todo> =>
+    apiClient.patch(`events/${eventId}/todos/${todoId}/assign`, { json: body }).json<Todo>(),
+  setDueDate: (eventId: string, todoId: string, dueDate: string | null): Promise<Todo> =>
+    apiClient
+      .patch(`events/${eventId}/todos/${todoId}/due-date`, { json: { dueDate } })
+      .json<Todo>(),
 };

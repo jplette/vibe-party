@@ -83,9 +83,9 @@ func main() {
 	// Wire up services.
 	userSvc := service.NewUserService(userRepo, eventRepo)
 	eventSvc := service.NewEventService(eventRepo)
-	todoSvc := service.NewTodoService(todoRepo, eventRepo)
+	todoSvc := service.NewTodoService(todoRepo, eventRepo, invRepo, userRepo, emailSvc)
 	itemSvc := service.NewItemService(itemRepo, eventRepo)
-	invSvc := service.NewInvitationService(invRepo, eventRepo, userRepo, emailSvc)
+	invSvc := service.NewInvitationService(invRepo, eventRepo, userRepo, todoRepo, emailSvc)
 
 	// Wire up handlers.
 	healthHandler := handler.NewHealthHandler(db, redisClient)
@@ -145,6 +145,7 @@ func main() {
 			r.Post("/events/{id}/todos", todoHandler.CreateTodo)
 			r.Put("/events/{id}/todos/{tid}", todoHandler.UpdateTodo)
 			r.Patch("/events/{id}/todos/{tid}/assign", todoHandler.AssignTodo)
+			r.Patch("/events/{id}/todos/{tid}/due-date", todoHandler.SetDueDate)
 			r.Patch("/events/{id}/todos/{tid}/complete", todoHandler.CompleteTodo)
 			r.Delete("/events/{id}/todos/{tid}", todoHandler.DeleteTodo)
 
