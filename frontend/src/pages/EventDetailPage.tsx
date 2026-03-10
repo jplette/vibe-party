@@ -11,18 +11,25 @@ import {
   Text,
   Heading,
   Grid,
+  Table,
 } from '@radix-ui/themes';
 import {
   Pencil1Icon,
-  GearIcon,
   PersonIcon,
   PlusIcon,
   GlobeIcon,
   CalendarIcon,
   ExternalLinkIcon,
+  TrashIcon,
+  ReloadIcon,
 } from '@radix-ui/react-icons';
 import { useEvent } from '../hooks/useEvents';
-import { useEventMembers, useSendInvitation } from '../hooks/useInvitations';
+import {
+  useEventMembers,
+  useInvitations,
+  useSendInvitation,
+  useCancelInvitation,
+} from '../hooks/useInvitations';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { TodoList } from '../components/todos/TodoList';
 import { BringItemList } from '../components/items/BringItemList';
@@ -30,6 +37,8 @@ import { InviteForm } from '../components/invitations/InviteForm';
 import { PageHeader } from '../components/layout/PageHeader';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { ErrorMessage } from '../components/ui/ErrorMessage';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { toast } from '../components/ui/ToastProvider';
 import { formatDateTimeRange, formatDuration, formatDate } from '../utils/formatDate';
 import type { InvitationFormValues } from '../types';
@@ -40,10 +49,14 @@ export function EventDetailPage() {
   const { data: currentUser } = useCurrentUser();
   const dbUserId = currentUser?.id ?? null;
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [revokeId, setRevokeId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   const { data: event, isLoading, isError } = useEvent(id!);
   const { data: members = [] } = useEventMembers(id!);
+  const { data: invitations = [], isLoading: invLoading } = useInvitations(id!);
   const sendInvitation = useSendInvitation(id!);
+  const cancelInvitation = useCancelInvitation(id!);
 
   const currentMember = members.find((m) => m.userId === dbUserId);
   const isAdmin = currentMember?.role === 'admin' || event?.createdBy === dbUserId;
@@ -55,6 +68,29 @@ export function EventDetailPage() {
       setInviteOpen(false);
     } catch {
       toast.error('Failed to send invitation', 'They may already be invited.');
+    }
+  };
+
+  const handleResend = async (email: string) => {
+    setResendingId(email);
+    try {
+      await sendInvitation.mutateAsync({ email });
+      toast.success('Invitation resent', `A new invitation was sent to ${email}`);
+    } catch {
+      toast.error('Failed to resend invitation', 'Please try again.');
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!revokeId) return;
+    try {
+      await cancelInvitation.mutateAsync(revokeId);
+      toast.success('Invitation revoked');
+      setRevokeId(null);
+    } catch {
+      toast.error('Failed to revoke invitation');
     }
   };
 
@@ -80,6 +116,8 @@ export function EventDetailPage() {
   const duration = event.date ? formatDuration(event.date, event.endDate) : null;
   const subtitle = [dateRange, duration].filter(Boolean).join(' · ') || 'Date TBD';
 
+  const pendingCount = invitations.filter((inv) => inv.status === 'pending').length;
+
   return (
     <Box>
       <PageHeader
@@ -89,24 +127,14 @@ export function EventDetailPage() {
         backLabel="Events"
         actions={
           isAdmin ? (
-            <Flex gap="2">
-              <Button
-                variant="outline"
-                size="2"
-                onClick={() => navigate(`/events/${id}/edit`)}
-                style={{ cursor: 'pointer' }}
-              >
-                <Pencil1Icon /> Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="2"
-                onClick={() => navigate(`/events/${id}/settings`)}
-                style={{ cursor: 'pointer' }}
-              >
-                <GearIcon /> Settings
-              </Button>
-            </Flex>
+            <Button
+              variant="outline"
+              size="2"
+              onClick={() => navigate(`/events/${id}/edit`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <Pencil1Icon /> Edit
+            </Button>
           ) : undefined
         }
       />
@@ -126,6 +154,19 @@ export function EventDetailPage() {
         </Dialog.Content>
       </Dialog.Root>
 
+      {/* ── Revoke Confirm Modal ── */}
+      <ConfirmModal
+        open={!!revokeId}
+        onOpenChange={(open) => {
+          if (!open) setRevokeId(null);
+        }}
+        title="Revoke Invitation"
+        description="Are you sure you want to revoke this invitation? The recipient will no longer be able to accept it."
+        confirmLabel="Revoke"
+        onConfirm={handleRevoke}
+        isLoading={cancelInvitation.isPending}
+      />
+
       {/* ── Tabs ── */}
       <Tabs.Root defaultValue="info">
         <Tabs.List>
@@ -133,6 +174,11 @@ export function EventDetailPage() {
           <Tabs.Trigger value="todos">Todos</Tabs.Trigger>
           <Tabs.Trigger value="items">Items</Tabs.Trigger>
           <Tabs.Trigger value="guests">Guests ({members.length})</Tabs.Trigger>
+          {isAdmin && (
+            <Tabs.Trigger value="invitations">
+              Invitations{pendingCount > 0 ? ` (${pendingCount})` : ''}
+            </Tabs.Trigger>
+          )}
         </Tabs.List>
 
         {/* ── Info tab ── */}
@@ -243,21 +289,12 @@ export function EventDetailPage() {
             )}
 
             {isAdmin && (
-              <Flex gap="3">
-                <Button
-                  style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
-                  onClick={() => navigate(`/events/${id}/edit`)}
-                >
-                  <Pencil1Icon /> Edit Event
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/events/${id}/settings`)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  Manage Invitations
-                </Button>
-              </Flex>
+              <Button
+                style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
+                onClick={() => navigate(`/events/${id}/edit`)}
+              >
+                <Pencil1Icon /> Edit Event
+              </Button>
             )}
           </Box>
         </Tabs.Content>
@@ -323,7 +360,12 @@ export function EventDetailPage() {
                           <Text
                             size="1"
                             color="gray"
-                            style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            style={{
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
                           >
                             {member.user.email}
                           </Text>
@@ -343,6 +385,89 @@ export function EventDetailPage() {
             )}
           </Box>
         </Tabs.Content>
+
+        {/* ── Invitations tab (admin only) ── */}
+        {isAdmin && (
+          <Tabs.Content value="invitations">
+            <Box pt="5">
+              <Flex justify="between" align="center" mb="4">
+                <Heading size="3">Invitations</Heading>
+                <Button
+                  style={{ backgroundColor: '#ff6b35', cursor: 'pointer' }}
+                  onClick={() => setInviteOpen(true)}
+                >
+                  <PlusIcon /> Invite Guest
+                </Button>
+              </Flex>
+
+              {invLoading ? (
+                <LoadingSpinner />
+              ) : invitations.length === 0 ? (
+                <Text color="gray" size="2">
+                  No invitations sent yet. Use the button above to invite guests.
+                </Text>
+              ) : (
+                <Table.Root variant="surface">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Invite Date</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {invitations.map((inv) => (
+                      <Table.Row key={inv.id}>
+                        <Table.Cell>
+                          <Text size="2">{inv.email}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <StatusBadge status={inv.status} />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1" color="gray">
+                            {formatDate(inv.createdAt)}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex gap="1" align="center">
+                            {(inv.status === 'pending' || inv.status === 'declined') && (
+                              <Button
+                                variant="ghost"
+                                size="1"
+                                onClick={() => handleResend(inv.email)}
+                                disabled={resendingId === inv.email}
+                                aria-label={`Resend invitation to ${inv.email}`}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                <ReloadIcon />
+                                Resend
+                              </Button>
+                            )}
+                            {inv.status === 'pending' && (
+                              <Button
+                                variant="ghost"
+                                color="red"
+                                size="1"
+                                onClick={() => setRevokeId(inv.id)}
+                                aria-label={`Revoke invitation for ${inv.email}`}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                <TrashIcon />
+                                Revoke
+                              </Button>
+                            )}
+                          </Flex>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+              )}
+            </Box>
+          </Tabs.Content>
+        )}
       </Tabs.Root>
     </Box>
   );

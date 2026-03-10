@@ -42,9 +42,6 @@ const EventDetailPage = lazy(() =>
 const EventEditPage = lazy(() =>
   import('./pages/EventEditPage').then((m) => ({ default: m.EventEditPage })),
 );
-const EventSettingsPage = lazy(() =>
-  import('./pages/EventSettingsPage').then((m) => ({ default: m.EventSettingsPage })),
-);
 
 // ─── Suspense wrapper ─────────────────────────────────────────────────────────
 
@@ -150,14 +147,6 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrap>
             <EventEditPage />
-          </SuspenseWrap>
-        ),
-      },
-      {
-        path: '/events/:id/settings',
-        element: (
-          <SuspenseWrap>
-            <EventSettingsPage />
           </SuspenseWrap>
         ),
       },
