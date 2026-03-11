@@ -12,6 +12,7 @@ import {
   Heading,
   Grid,
   Table,
+  IconButton,
 } from '@radix-ui/themes';
 import {
   Pencil1Icon,
@@ -30,6 +31,7 @@ import {
   useSendInvitation,
   useCancelInvitation,
   useEventGuests,
+  useRemoveMember,
 } from '../hooks/useInvitations';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { TodoList } from '../components/todos/TodoList';
@@ -42,7 +44,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { toast } from '../components/ui/ToastProvider';
 import { formatDateTimeRange, formatDuration, formatDate } from '../utils/formatDate';
-import type { InvitationFormValues } from '../types';
+import type { InvitationFormValues, EventGuest } from '../types';
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +54,7 @@ export function EventDetailPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [revokeId, setRevokeId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [guestToRemove, setGuestToRemove] = useState<EventGuest | null>(null);
 
   const { data: event, isLoading, isError } = useEvent(id!);
   const { data: members = [] } = useEventMembers(id!);
@@ -59,9 +62,11 @@ export function EventDetailPage() {
   const { data: guests } = useEventGuests(id!);
   const sendInvitation = useSendInvitation(id!);
   const cancelInvitation = useCancelInvitation(id!);
+  const removeGuestMutation = useRemoveMember(id!);
 
   const currentMember = members.find((m) => m.userId === dbUserId);
   const isAdmin = currentMember?.role === 'admin' || event?.createdBy === dbUserId;
+  const isOwner = event?.createdBy === dbUserId;
 
   const handleSendInvite = async (data: InvitationFormValues) => {
     try {
@@ -93,6 +98,17 @@ export function EventDetailPage() {
       setRevokeId(null);
     } catch {
       toast.error('Failed to revoke invitation');
+    }
+  };
+
+  const handleRemoveGuest = async () => {
+    if (!guestToRemove?.userId) return;
+    try {
+      await removeGuestMutation.mutateAsync(guestToRemove.userId);
+      toast.success('Guest removed', `${guestToRemove.name || guestToRemove.email} has been removed from the event.`);
+      setGuestToRemove(null);
+    } catch {
+      toast.error('Failed to remove guest', 'Please try again.');
     }
   };
 
@@ -167,6 +183,19 @@ export function EventDetailPage() {
         confirmLabel="Revoke"
         onConfirm={handleRevoke}
         isLoading={cancelInvitation.isPending}
+      />
+
+      {/* ── Remove Guest Confirm Modal ── */}
+      <ConfirmModal
+        open={!!guestToRemove}
+        onOpenChange={(open) => {
+          if (!open) setGuestToRemove(null);
+        }}
+        title="Remove Guest"
+        description={`Are you sure you want to remove ${guestToRemove?.name || guestToRemove?.email || 'this guest'} from the event? They will lose access to event details, todos, and items.`}
+        confirmLabel="Remove"
+        onConfirm={handleRemoveGuest}
+        isLoading={removeGuestMutation.isPending}
       />
 
       {/* ── Tabs ── */}
@@ -381,6 +410,18 @@ export function EventDetailPage() {
                         >
                           {guest.role}
                         </Badge>
+                        {isOwner && guest.userId !== dbUserId && guest.role !== 'admin' && (
+                          <IconButton
+                            variant="ghost"
+                            color="red"
+                            size="1"
+                            onClick={() => setGuestToRemove(guest)}
+                            aria-label={`Remove ${guest.name || guest.email}`}
+                            style={{ cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            <TrashIcon />
+                          </IconButton>
+                        )}
                       </Flex>
                     );
                   }

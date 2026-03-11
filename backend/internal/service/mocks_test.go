@@ -22,6 +22,7 @@ type mockEventRepo struct {
 	DeleteFn                func(ctx context.Context, id uuid.UUID) error
 	GetMemberRoleFn         func(ctx context.Context, eventID, userID uuid.UUID) (string, error)
 	AddMemberFn             func(ctx context.Context, eventID, userID uuid.UUID, role string) error
+	RemoveMemberFn          func(ctx context.Context, eventID, userID uuid.UUID) error
 	ListMembersFn           func(ctx context.Context, eventID uuid.UUID) ([]model.EventMemberWithUser, error)
 	SharesEventMembershipFn func(ctx context.Context, userAID, userBID uuid.UUID) (bool, error)
 	ListGuestsFn            func(ctx context.Context, eventID uuid.UUID) ([]model.EventGuest, error)
@@ -51,6 +52,12 @@ func (m *mockEventRepo) GetMemberRole(ctx context.Context, eventID, userID uuid.
 }
 func (m *mockEventRepo) AddMember(ctx context.Context, eventID, userID uuid.UUID, role string) error {
 	return m.AddMemberFn(ctx, eventID, userID, role)
+}
+func (m *mockEventRepo) RemoveMember(ctx context.Context, eventID, userID uuid.UUID) error {
+	if m.RemoveMemberFn != nil {
+		return m.RemoveMemberFn(ctx, eventID, userID)
+	}
+	return nil
 }
 func (m *mockEventRepo) ListMembers(ctx context.Context, eventID uuid.UUID) ([]model.EventMemberWithUser, error) {
 	return m.ListMembersFn(ctx, eventID)
@@ -236,8 +243,9 @@ func (m *mockUserRepo) GetByEmail(ctx context.Context, email string) (*model.Use
 // ---- emailSender mock ----
 
 type mockEmailSender struct {
-	SendInvitationFn    func(recipientEmail, eventName, token string) error
+	SendInvitationFn     func(recipientEmail, eventName, token string) error
 	SendTodoAssignmentFn func(recipientEmail, eventName, todoTitle string) error
+	SendGuestRemovedFn   func(recipientEmail, eventName string) error
 }
 
 func (m *mockEmailSender) SendInvitation(recipientEmail, eventName, token string) error {
@@ -254,9 +262,16 @@ func (m *mockEmailSender) SendTodoAssignment(recipientEmail, eventName, todoTitl
 	return nil
 }
 
+func (m *mockEmailSender) SendGuestRemoved(recipientEmail, eventName string) error {
+	if m.SendGuestRemovedFn != nil {
+		return m.SendGuestRemovedFn(recipientEmail, eventName)
+	}
+	return nil
+}
+
 // newEventService constructs an EventService with mock dependencies for testing.
 func newTestEventService(repo eventRepository) *EventService {
-	return &EventService{eventRepo: repo}
+	return &EventService{eventRepo: repo, userRepo: &mockUserRepo{}, emailSvc: &mockEmailSender{}}
 }
 
 // newTodoService constructs a TodoService with mock dependencies for testing.

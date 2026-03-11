@@ -82,7 +82,7 @@ func main() {
 
 	// Wire up services.
 	userSvc := service.NewUserService(userRepo, eventRepo)
-	eventSvc := service.NewEventService(eventRepo)
+	eventSvc := service.NewEventService(eventRepo, userRepo, emailSvc)
 	todoSvc := service.NewTodoService(todoRepo, eventRepo, invRepo, userRepo, emailSvc)
 	itemSvc := service.NewItemService(itemRepo, eventRepo, invRepo)
 	invSvc := service.NewInvitationService(invRepo, eventRepo, userRepo, todoRepo, itemRepo, emailSvc)
@@ -139,6 +139,7 @@ func main() {
 
 			// Members (nested under events).
 			r.Get("/events/{id}/members", eventHandler.ListMembers)
+			r.Delete("/events/{id}/members/{userId}", eventHandler.RemoveGuest)
 			r.Get("/events/{id}/guests", eventHandler.ListGuests)
 
 			// Todos (nested under events).

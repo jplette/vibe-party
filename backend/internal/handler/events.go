@@ -156,6 +156,32 @@ func (h *EventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// RemoveGuest handles DELETE /events/:id/members/:userId.
+func (h *EventHandler) RemoveGuest(w http.ResponseWriter, r *http.Request) {
+	user, ok := RequireUser(w, r)
+	if !ok {
+		return
+	}
+
+	eventID, err := parseUUIDParam(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	targetUserID, err := parseUUIDParam(r, "userId")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	if err := h.eventSvc.RemoveGuest(r.Context(), eventID, user.ID, targetUserID); HandleServiceError(w, err) {
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // ListMembers handles GET /events/:id/members.
 func (h *EventHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
 	user, ok := RequireUser(w, r)

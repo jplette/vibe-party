@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/vibe-party/backend/internal/model"
@@ -13,11 +14,13 @@ import (
 // EventService handles business logic for events.
 type EventService struct {
 	eventRepo eventRepository
+	userRepo  userRepository
+	emailSvc  emailSender
 }
 
 // NewEventService creates a new EventService.
-func NewEventService(eventRepo *repository.EventRepository) *EventService {
-	return &EventService{eventRepo: eventRepo}
+func NewEventService(eventRepo *repository.EventRepository, userRepo *repository.UserRepository, emailSvc emailSender) *EventService {
+	return &EventService{eventRepo: eventRepo, userRepo: userRepo, emailSvc: emailSvc}
 }
 
 // ListUserEvents returns all events the current user belongs to.
@@ -122,6 +125,56 @@ func (s *EventService) ListGuests(ctx context.Context, eventID, userID uuid.UUID
 		return nil, err
 	}
 	return s.eventRepo.ListGuests(ctx, eventID)
+}
+
+// RemoveGuest removes a member from an event. Requires the caller to be the event owner.
+// The event owner cannot remove themselves or other admins.
+func (s *EventService) RemoveGuest(ctx context.Context, eventID, callerID, targetUserID uuid.UUID) error {
+	event, err := s.eventRepo.GetByID(ctx, eventID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("get event: %w", err)
+	}
+	if event.CreatedBy != callerID {
+		return fmt.Errorf("%w: only the event owner can remove guests", ErrForbidden)
+	}
+
+	if callerID == targetUserID {
+		return fmt.Errorf("%w: cannot remove yourself from the event", ErrInvalidInput)
+	}
+
+	// Check that the target is a member and not an admin.
+	targetRole, err := s.eventRepo.GetMemberRole(ctx, eventID, targetUserID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("check target membership: %w", err)
+	}
+	if targetRole == "admin" {
+		return fmt.Errorf("%w: cannot remove an admin from the event", ErrForbidden)
+	}
+
+	// Fetch target user email before removal for notification.
+	targetUser, err := s.userRepo.GetByID(ctx, targetUserID)
+	if err != nil {
+		return fmt.Errorf("get target user: %w", err)
+	}
+
+	if err := s.eventRepo.RemoveMember(ctx, eventID, targetUserID); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("remove guest: %w", err)
+	}
+
+	// Send removal notification (non-fatal).
+	if sendErr := s.emailSvc.SendGuestRemoved(targetUser.Email, event.Name); sendErr != nil {
+		slog.Warn("failed to send guest removal email", slog.String("error", sendErr.Error()))
+	}
+	return nil
 }
 
 // RequireMember verifies the user is a member of the event. Returns the role.
