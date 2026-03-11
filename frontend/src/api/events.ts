@@ -1,8 +1,8 @@
 import { apiClient } from './client';
-import type { Event, EventFormValues } from '../types';
+import type { Event, EventWithRole, EventFormValues } from '../types';
 
 export const eventsApi = {
-  list: (): Promise<Event[]> => apiClient.get('events').json<Event[]>(),
+  list: (): Promise<EventWithRole[]> => apiClient.get('events').json<EventWithRole[]>(),
   get: (id: string): Promise<Event> => apiClient.get(`events/${id}`).json<Event>(),
   create: (data: EventFormValues): Promise<Event> =>
     apiClient.post('events', { json: data }).json<Event>(),

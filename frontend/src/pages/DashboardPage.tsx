@@ -156,6 +156,7 @@ export function DashboardPage() {
               key={event.id}
               event={event}
               onClick={() => navigate(`/events/${event.id}`)}
+              currentUserId={user?.id}
             />
           ))}
         </Grid>

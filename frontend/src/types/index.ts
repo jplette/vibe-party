@@ -21,6 +21,12 @@ export interface Event {
   locationCountry?: string;
   createdBy: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventWithRole extends Event {
+  role: 'admin' | 'member';
+  ownerName: string;
 }
 
 export interface Todo {
