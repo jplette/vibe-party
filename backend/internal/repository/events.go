@@ -187,6 +187,19 @@ func (r *EventRepository) AddMember(ctx context.Context, eventID, userID uuid.UU
 	return nil
 }
 
+// RemoveMember removes a user from an event's membership.
+func (r *EventRepository) RemoveMember(ctx context.Context, eventID, userID uuid.UUID) error {
+	const q = `DELETE FROM event_members WHERE event_id = $1 AND user_id = $2`
+	tag, err := r.db.Exec(ctx, q, eventID, userID)
+	if err != nil {
+		return fmt.Errorf("remove event member: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // ListMembers returns all members of an event with their user details.
 func (r *EventRepository) ListMembers(ctx context.Context, eventID uuid.UUID) ([]model.EventMemberWithUser, error) {
 	const q = `

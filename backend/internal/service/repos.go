@@ -19,6 +19,7 @@ type eventRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetMemberRole(ctx context.Context, eventID, userID uuid.UUID) (string, error)
 	AddMember(ctx context.Context, eventID, userID uuid.UUID, role string) error
+	RemoveMember(ctx context.Context, eventID, userID uuid.UUID) error
 	ListMembers(ctx context.Context, eventID uuid.UUID) ([]model.EventMemberWithUser, error)
 	SharesEventMembership(ctx context.Context, userAID, userBID uuid.UUID) (bool, error)
 	ListGuests(ctx context.Context, eventID uuid.UUID) ([]model.EventGuest, error)
@@ -68,8 +69,9 @@ type userRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
-// emailSender is the subset of email.Service used by InvitationService and TodoService.
+// emailSender is the subset of email.Service used by InvitationService, TodoService, and EventService.
 type emailSender interface {
 	SendInvitation(recipientEmail, eventName, token string) error
 	SendTodoAssignment(recipientEmail, eventName, todoTitle string) error
+	SendGuestRemoved(recipientEmail, eventName string) error
 }

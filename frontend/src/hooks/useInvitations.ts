@@ -67,6 +67,7 @@ export function useRemoveMember(eventId: string) {
     mutationFn: (userId: string) => invitationsApi.removeMember(eventId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invitationKeys.members(eventId) });
+      queryClient.invalidateQueries({ queryKey: invitationKeys.guests(eventId) });
     },
   });
 }

@@ -73,6 +73,39 @@ func (s *Service) SendTodoAssignment(recipientEmail, eventName, todoTitle string
 	return nil
 }
 
+// SendGuestRemoved sends an HTML email notifying a guest that they have been removed from an event.
+func (s *Service) SendGuestRemoved(recipientEmail, eventName string) error {
+	subject := fmt.Sprintf("You have been removed from %s on Vibe Party", eventName)
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #efefd0;">
+  <h1 style="color: #ff6b35;">You have been removed from an event</h1>
+  <p>You have been removed from the event: <strong>%s</strong></p>
+  <p>If you believe this was a mistake, please contact the event organizer.</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+  <p style="color: #9ca3af; font-size: 12px;">
+    This is an automated notification from Vibe Party.
+  </p>
+</body>
+</html>`, eventName)
+
+	var msg strings.Builder
+	msg.WriteString("MIME-Version: 1.0\r\n")
+	msg.WriteString("Content-Type: text/html; charset=\"UTF-8\"\r\n")
+	msg.WriteString(fmt.Sprintf("From: %s\r\n", s.from))
+	msg.WriteString(fmt.Sprintf("To: %s\r\n", recipientEmail))
+	msg.WriteString(fmt.Sprintf("Subject: %s\r\n", subject))
+	msg.WriteString("\r\n")
+	msg.WriteString(htmlBody)
+
+	addr := fmt.Sprintf("%s:%d", s.host, s.port)
+	if err := smtp.SendMail(addr, nil, s.from, []string{recipientEmail}, []byte(msg.String())); err != nil {
+		return fmt.Errorf("smtp send: %w", err)
+	}
+	return nil
+}
+
 // SendInvitation sends an HTML invitation email to the recipient.
 func (s *Service) SendInvitation(recipientEmail, eventName, token string) error {
 	acceptURL := fmt.Sprintf("%s/invitations/accept?token=%s", s.frontendURL, token)
