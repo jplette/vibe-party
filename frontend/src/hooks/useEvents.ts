@@ -5,7 +5,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { eventsApi } from '../api/events';
-import type { Event, EventFormValues } from '../types';
+import type { Event, EventWithRole, EventFormValues } from '../types';
 
 // Query key factory for cache management
 export const eventKeys = {
@@ -15,7 +15,7 @@ export const eventKeys = {
 };
 
 /** Fetch all events the current user can see */
-export function useEvents(): UseQueryResult<Event[]> {
+export function useEvents(): UseQueryResult<EventWithRole[]> {
   return useQuery({
     queryKey: eventKeys.list(),
     queryFn: () => eventsApi.list(),

@@ -1,19 +1,25 @@
 import { Card, Flex, Heading, Text, Badge } from '@radix-ui/themes';
-import { CalendarIcon, GlobeIcon } from '@radix-ui/react-icons';
+import { CalendarIcon, GlobeIcon, StarFilledIcon } from '@radix-ui/react-icons';
 import { isFuture, formatDateTimeRange, formatDate } from '../../utils/formatDate';
-import type { Event } from '../../types';
+import type { EventWithRole } from '../../types';
 
 interface EventCardProps {
-  event: Event;
+  event: EventWithRole;
   onClick: () => void;
+  currentUserId?: string | null;
 }
 
-export function EventCard({ event, onClick }: EventCardProps) {
+export function EventCard({ event, onClick, currentUserId }: EventCardProps) {
   const upcoming = isFuture(event.date, event.endDate);
+  const isOwner = currentUserId != null && event.createdBy === currentUserId;
 
   return (
     <Card
-      style={{ cursor: 'pointer', transition: 'box-shadow 0.15s, transform 0.15s' }}
+      style={{
+        cursor: 'pointer',
+        transition: 'box-shadow 0.15s, transform 0.15s',
+        borderLeft: isOwner ? '3px solid #ff6b35' : undefined,
+      }}
       onClick={onClick}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)';
@@ -28,14 +34,20 @@ export function EventCard({ event, onClick }: EventCardProps) {
         <Heading size="4" style={{ flex: 1, lineHeight: '1.3' }}>
           {event.name}
         </Heading>
-        <Badge
-          color={upcoming ? 'green' : 'gray'}
-          variant="soft"
-          ml="2"
-          style={{ flexShrink: 0 }}
-        >
-          {upcoming ? 'Upcoming' : 'Past'}
-        </Badge>
+        <Flex gap="1" align="center" style={{ flexShrink: 0 }} ml="2">
+          <Badge
+            color={isOwner ? 'orange' : 'gray'}
+            variant="soft"
+          >
+            {isOwner ? 'Owner' : 'Member'}
+          </Badge>
+          <Badge
+            color={upcoming ? 'green' : 'gray'}
+            variant="soft"
+          >
+            {upcoming ? 'Upcoming' : 'Past'}
+          </Badge>
+        </Flex>
       </Flex>
 
       {event.date && (
@@ -74,9 +86,17 @@ export function EventCard({ event, onClick }: EventCardProps) {
         </Text>
       )}
 
-      <Text size="1" color="gray" mt="3" style={{ display: 'block' }}>
-        Created {formatDate(event.createdAt)}
-      </Text>
+      <Flex align="center" justify="between" mt="3">
+        <Flex align="center" gap="1">
+          <StarFilledIcon style={{ color: isOwner ? '#ff6b35' : 'var(--gray-8)', width: 12, height: 12, flexShrink: 0 }} />
+          <Text size="1" color="gray">
+            {isOwner ? 'You' : event.ownerName}
+          </Text>
+        </Flex>
+        <Text size="1" color="gray">
+          Updated {formatDate(event.updatedAt)}
+        </Text>
+      </Flex>
     </Card>
   );
 }

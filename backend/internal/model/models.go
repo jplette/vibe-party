@@ -57,10 +57,11 @@ type UserBrief struct {
 	Name  string    `json:"name"`
 }
 
-// EventWithRole combines an event with the current user's role.
+// EventWithRole combines an event with the current user's role and owner name.
 type EventWithRole struct {
 	Event
-	Role string `json:"role"`
+	Role      string `json:"role"`
+	OwnerName string `json:"ownerName"`
 }
 
 // Todo represents a task within an event.

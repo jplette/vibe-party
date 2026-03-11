@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Flex, Grid, TextField, Button } from '@radix-ui/themes';
 import { MagnifyingGlassIcon, PlusIcon } from '@radix-ui/react-icons';
 import { useEvents } from '../hooks/useEvents';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { EventCard } from '../components/events/EventCard';
 import { PageHeader } from '../components/layout/PageHeader';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -12,6 +13,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 export function EventListPage() {
   const navigate = useNavigate();
   const { data: events = [], isLoading, isError } = useEvents();
+  const { data: currentUser } = useCurrentUser();
   const [search, setSearch] = useState('');
 
   if (isLoading) return <LoadingSpinner />;
@@ -78,6 +80,7 @@ export function EventListPage() {
               key={event.id}
               event={event}
               onClick={() => navigate(`/events/${event.id}`)}
+              currentUserId={currentUser?.id}
             />
           ))}
         </Grid>

@@ -23,6 +23,7 @@ import {
   ExternalLinkIcon,
   TrashIcon,
   ReloadIcon,
+  StarFilledIcon,
 } from '@radix-ui/react-icons';
 import { useEvent } from '../hooks/useEvents';
 import {
@@ -67,6 +68,7 @@ export function EventDetailPage() {
   const currentMember = members.find((m) => m.userId === dbUserId);
   const isAdmin = currentMember?.role === 'admin' || event?.createdBy === dbUserId;
   const isOwner = event?.createdBy === dbUserId;
+  const ownerMember = members.find((m) => m.userId === event?.createdBy);
 
   const handleSendInvite = async (data: InvitationFormValues) => {
     try {
@@ -303,6 +305,20 @@ export function EventDetailPage() {
                   </Text>
                   <Text size="2" weight="medium">
                     {formatDate(event.createdAt)}
+                  </Text>
+                </Box>
+              </Flex>
+
+              <Flex align="start" gap="2">
+                <StarFilledIcon
+                  style={{ marginTop: 2, color: '#ff6b35', flexShrink: 0, width: 16 }}
+                />
+                <Box>
+                  <Text size="1" color="gray" style={{ display: 'block' }}>
+                    Organizer
+                  </Text>
+                  <Text size="2" weight="medium">
+                    {isOwner ? 'You' : (ownerMember?.user?.name ?? event.createdBy)}
                   </Text>
                 </Box>
               </Flex>

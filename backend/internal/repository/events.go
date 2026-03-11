@@ -26,9 +26,10 @@ func (r *EventRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([
 	const q = `
 		SELECT e.id, e.name, e.description, e.date, e.end_date,
 		       e.location_name, e.location_street, e.location_city, e.location_zip, e.location_country,
-		       e.created_by, e.created_at, e.updated_at, em.role
+		       e.created_by, e.created_at, e.updated_at, em.role, u.name AS owner_name
 		FROM events e
 		JOIN event_members em ON em.event_id = e.id
+		JOIN users u ON u.id = e.created_by
 		WHERE em.user_id = $1
 		ORDER BY e.created_at DESC
 	`
@@ -323,6 +324,7 @@ func scanEventWithRole(rows pgx.Rows, e *model.EventWithRole) error {
 		&e.CreatedAt,
 		&e.UpdatedAt,
 		&e.Role,
+		&e.OwnerName,
 	)
 }
 
